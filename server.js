@@ -58,13 +58,6 @@ app.get("/auth/meta", (req, res) => {
   const returnUrl = String(req.query.return || "/");
   const state = makeState({ returnUrl });
   const redirectUri = `${BASE_URL}/auth/meta/callback`;
-  const scopes = [
-    "public_profile",
-    "pages_show_list",
-    "pages_read_engagement",
-    "pages_read_user_content",
-    "read_insights"
-  ].join(",");
   const url = new URL(`https://www.facebook.com/${META_GRAPH_VERSION}/dialog/oauth`);
   url.searchParams.set("client_id", META_APP_ID);
   url.searchParams.set("config_id", META_CONFIG_ID);
@@ -149,17 +142,6 @@ console.log("META PAGES:", (pages.data || []).map(p => ({
   name: p.name,
   tasks: p.tasks || []
 })));
-    try {
-  const directPage = await metaGet("/128420931070787", {
-    access_token: activeToken,
-    fields: "id,name"
-  });
-
-  console.log("DIRECT PAGE TEST:", directPage);
-} catch (e) {
-  console.error("DIRECT PAGE TEST FAILED:", e.meta || e);
-}
-
     // Do not put access tokens in the browser URL. For the first version,
     // the selected Page data is encoded into a short-lived server-side handoff.
     // A production version should persist encrypted sessions in a database.
@@ -227,8 +209,7 @@ app.post("/api/analyze", async (req, res) => {
     const metricCandidates = [
       "page_total_media_view_unique",
       "page_media_view",
-      "page_follows",
-      "page_follows_unique"
+      "page_follows"
     ];
 
     for (const metric of metricCandidates) {
@@ -267,17 +248,17 @@ function buildDiagnostic(insights, posts = []) {
   const hasData = available.some(x => Array.isArray(x.data) && x.data.length);
   return {
     dataAvailable: hasData,
-    status: hasData ? "Real Meta data received" : "Waiting for approved/available Insights",
+    status: hasData ? "Am primit date reale de la Meta" : "Nu sunt disponibile încă suficiente date Insights",
     priorities: hasData
       ? [
-          "Compare recent media views with the Page's follower base.",
-          "Identify which formats and posts generate the most interaction.",
-          "Use the next 7 days to test one clear content hypothesis at a time."
+          "Verifică evoluția vizualizărilor și compară-le cu baza de urmăritori.",
+          "Identifică postările care aduc cea mai multă vizibilitate și interacțiune.",
+          "În următoarele 7 zile, testează o direcție clară de conținut și urmărește rezultatul."
         ]
       : [
-          "Finish Meta permission/App Review requirements.",
-          "Confirm the connected account has the required Page task for Insights.",
-          "Once Insights are available, calculate visibility, engagement, content and timing findings."
+          "Verifică dacă toate permisiunile Meta necesare sunt aprobate pentru aplicație.",
+          "Confirmă că pagina conectată are accesul necesar pentru Insights.",
+          "După ce datele Insights devin disponibile, vom putea analiza vizibilitatea, conținutul și performanța."
         ],
     postsAnalyzed: posts.length
   };
