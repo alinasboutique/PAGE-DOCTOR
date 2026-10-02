@@ -328,24 +328,27 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
 
   const byCategory = {};
   analyzedPosts.forEach(p => {
-    if (!byCategory[p.category]) byCategory[p.category] = { count: 0, engagement: 0, comments: 0, shares: 0 };
+    if (!byCategory[p.category]) byCategory[p.category] = { count: 0, engagementCount: 0, engagement: 0, comments: 0, shares: 0 };
     byCategory[p.category].count++;
-    byCategory[p.category].engagement += p.engagement.total;
-    byCategory[p.category].comments += p.engagement.comments;
-    byCategory[p.category].shares += p.engagement.shares;
+    if (p.engagement.available && p.engagement.total !== null) {
+      byCategory[p.category].engagementCount++;
+      byCategory[p.category].engagement += p.engagement.total;
+      if (p.engagement.comments !== null) byCategory[p.category].comments += p.engagement.comments;
+      if (p.engagement.shares !== null) byCategory[p.category].shares += p.engagement.shares;
+    }
   });
 
   const categoryStats = Object.entries(byCategory)
     .map(([category, v]) => ({
       category,
       count: v.count,
-      avgEngagement: v.count ? v.engagement / v.count : 0,
+      avgEngagement: v.engagementCount ? v.engagement / v.engagementCount : null,
       comments: v.comments,
       shares: v.shares
     }))
     .sort((a,b) => b.avgEngagement - a.avgEngagement);
 
-  const eligibleCategories = categoryStats.filter(x => x.count >= 2);
+  const eligibleCategories = categoryStats.filter(x => x.engagementCount >= 2 && x.avgEngagement !== null);
   const bestCategory = eligibleCategories[0] || categoryStats[0] || null;
   const weakestCategory = eligibleCategories.length > 1 ? [...eligibleCategories].sort((a,b) => a.avgEngagement - b.avgEngagement)[0] : null;
 
