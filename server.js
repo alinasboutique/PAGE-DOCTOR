@@ -241,20 +241,19 @@ app.post("/api/analyze", async (req, res) => {
       });
       result.posts = feed.data || [];
       result.posts_engagement_source = "feed";
-      console.log("FEED OK:", {
+      console.log("POSTS OK:", {
         count: result.posts.length,
-        withReactions: result.posts.filter(p => typeof p?.reactions?.summary?.total_count === "number").length,
-        withComments: result.posts.filter(p => typeof p?.comments?.summary?.total_count === "number").length,
-        withShares: result.posts.filter(p => typeof p?.shares?.count === "number").length
       });
     } catch (e) {
       result.posts_error = e.message;
       console.error("FEED WITH ENGAGEMENT FAILED:", e.meta || e);
 
       try {
-        const feed = await metaGet(`${page.id}/feed`, {
+        const feed = await metaGet(`${page.id}/posts`, {
           access_token: token,
-          fields: "id,message,created_time,permalink_url,type,status_type",
+          fields: feedFields,
+          since: String(since),
+          until: String(until),
           limit: "50"
         });
         result.posts = feed.data || [];
