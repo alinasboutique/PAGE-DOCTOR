@@ -181,7 +181,7 @@ app.get("/select-page", (req, res) => {
 
 app.post("/api/analyze", async (req, res) => {
   try {
-    const { state, pageId } = req.body || {};
+    const { state, pageId, niche, goal } = req.body || {};
     const payload = readState(state);
     if (payload.kind !== "pages") throw new Error("Invalid selection state.");
     const page = payload.pages.find(p => p.id === pageId);
@@ -310,7 +310,7 @@ app.post("/api/analyze", async (req, res) => {
       available: result.posts.filter(p => p?.engagement?.available).length
     });
 
-    result.diagnostic = buildDiagnostic(result.insights, result.posts, result.page);
+    result.diagnostic = buildDiagnostic(result.insights, result.posts, result.page, { niche, goal });
     res.json(result);
   } catch (e) {
     console.error("Analyze error:", e.meta || e);
@@ -384,7 +384,7 @@ function score10(value, thresholds) {
   return 10;
 }
 
-function buildDiagnostic(insights, posts = [], pageInfo = {}) {
+function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
   const available = insights.filter(x => !x.unavailable);
   const hasData = available.some(x => Array.isArray(x.data) && x.data.length);
   const followers = Number(pageInfo?.followers_count || pageInfo?.fan_count || 0);
@@ -420,6 +420,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
     .map(([category, v]) => ({
       category,
       count: v.count,
+      engagementCount: v.engagementCount,
       avgEngagement: v.engagementCount ? v.engagement / v.engagementCount : null,
       comments: v.comments,
       shares: v.shares
@@ -518,6 +519,8 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
     "Ziua 7: compară rezultatele și păstrează ce merită testat din nou."
   ];
 
+  const contentPlan = generateContentPlan({ niche: prefs.niche, goal: prefs.goal, bestCategory, topPost });
+
   const topPosts = [...engagementPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5);
 
   return {
@@ -536,6 +539,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
     blockers,
     priorities: priorities.slice(0,3),
     plan,
+    contentPlan,
     topPosts: topPosts.map(p => ({
       id: p.id,
       message: String(p.message || "").slice(0, 180),
@@ -545,6 +549,112 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
       engagement: p.engagement,
       permalink_url: p.permalink_url || null
     }))
+  };
+}
+
+function generateContentPlan({ niche, goal, bestCategory, topPost }) {
+  const n = String(niche || "Other").toLowerCase();
+  let key = "other";
+  if (n.includes("handmade")) key = "handmade";
+  else if (n.includes("wedding")) key = "wedding";
+  else if (n.includes("botez") || n.includes("baby")) key = "baby";
+  else if (n.includes("cadouri")) key = "gifts";
+  else if (n.includes("beauty")) key = "beauty";
+  else if (n.includes("food")) key = "food";
+  else if (n.includes("home")) key = "home";
+  else if (n.includes("servicii")) key = "services";
+
+  const common = {
+    handmade: [
+      ["ZIUA 1 · CARUSEL", "HOOK: Nu ai nevoie de inca un produs. Ai nevoie de unul care sa aiba povestea ta.", "Arata 3 creatii reale si explica pe scurt cui i se potriveste fiecare.", "CTA: Care dintre cele 3 ti s-ar potrivi? Scrie 1, 2 sau 3."],
+      ["ZIUA 2 · REEL", "HOOK: Uite ce nu vezi atunci cand primesti o creatie handmade gata ambalata.", "Filmeaza 5-7 cadre din proces: materiale, personalizare, detaliu, ambalare, produs final.", "CTA: Scrie-mi ce produs ai vrea sa vezi in urmatorul Reel."],
+      ["ZIUA 3 · EDUCATIV", "HOOK: 3 greseli pe care le faci cand alegi un produs personalizat.", "Explica 3 greseli reale din nisa si arata ce alegere este mai buna.", "CTA: Salveaza postarea pentru urmatoarea comanda."],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Am nevoie de ajutorul vostru: A sau B?", "Arata doua modele, culori sau finisaje reale.", "CTA: Voteaza A sau B si spune de ce."],
+      ["ZIUA 5 · VANZARE", "HOOK: Daca ai nevoie de un cadou care sa nu para ales in graba, uita-te la acesta.", "Prezinta un produs real, ce poate fi personalizat, pretul si timpul de executie.", "CTA: Scrie-mi DETALII si iti spun variantele disponibile."],
+      ["ZIUA 6 · DOVADA", "HOOK: Momentul in care vezi produsul final si iti dai seama ca toate detaliile au meritat.", "Arata o comanda finalizata sau un feedback real. Nu inventa testimoniale.", "CTA: Spune-mi ocazia si iti propun variante."],
+      ["ZIUA 7 · REPETA CE A DAT SEMNAL", "HOOK: Tema care a atras cele mai multe reactii merita o continuare.", "Reia categoria cu cea mai buna medie din analiza, dar schimba hook-ul si exemplul.", "CTA: Scrie DA daca vrei partea a doua."]
+    ],
+    wedding: [
+      ["ZIUA 1 · CARUSEL", "HOOK: 3 detalii mici care pot face o nunta sa para cu adevarat a voastra.", "Arata 3 produse reale din oferta si explica rolul fiecaruia.", "CTA: Care detaliu ti-ar placea la nunta ta? Scrie 1, 2 sau 3."],
+      ["ZIUA 2 · REEL", "HOOK: De la o coala simpla la un detaliu care ajunge pe masa mirilor.", "Filmeaza procesul unui produs de nunta pana la rezultatul final.", "CTA: Salveaza ideea si trimite-o persoanei cu care iei deciziile."],
+      ["ZIUA 3 · EDUCATIV", "HOOK: Nu comanda invitatiile inainte sa verifici aceste 3 lucruri.", "Explica textul, cantitatea, termenul si potrivirea cu tema nuntii.", "CTA: Salveaza postarea pentru momentul comenzii."],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Elegant sau romantic? Ce ati alege?", "Arata doua variante reale din portofoliu.", "CTA: Scrie ELEGANT sau ROMANTIC."],
+      ["ZIUA 5 · VANZARE", "HOOK: Daca ai stabilit deja data nuntii, acum este momentul pentru detalii.", "Prezinta un produs sau serviciu concret, ce include si cum se comanda.", "CTA: Trimite-mi data nuntii si iti spun variantele disponibile."],
+      ["ZIUA 6 · PORTOFOLIU", "HOOK: Asa arata cand toate detaliile unei nunti vorbesc aceeasi limba.", "Prezinta 4-6 produse din aceeasi tema sau culoare.", "CTA: Salveaza combinatia daca acesta este stilul pe care il cauti."],
+      ["ZIUA 7 · CONTINUARE", "HOOK: Varianta preferata merita sa o vedem completa.", "Continua formatul care a obtinut cele mai bune semnale si schimba unghiul.", "CTA: Ce element vrei sa adaug in partea a doua?"]
+    ],
+    baby: [
+      ["ZIUA 1 · CARUSEL", "HOOK: Botezul trece intr-o zi. Detaliile raman in fotografii ani de zile.", "Arata 3 produse relevante si explica rolul fiecaruia.", "CTA: Care detaliu ti se pare cel mai important? 1, 2 sau 3."],
+      ["ZIUA 2 · REEL", "HOOK: Asa se transforma un produs simplu intr-un detaliu personalizat pentru bebe.", "Filmeaza personalizarea de la inceput pana la produsul final.", "CTA: Urmareste pagina pentru urmatoarea transformare."],
+      ["ZIUA 3 · EDUCATIV", "HOOK: Daca pregatesti botezul, nu lasa aceste 3 lucruri pe ultima saptamana.", "Explica termenele, cantitatile si personalizarea.", "CTA: Salveaza lista si verifica ce ai deja pregatit."],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Pentru botez: alb si auriu sau pastel?", "Arata doua variante reale.", "CTA: Scrie ALB/AURIU sau PASTEL."],
+      ["ZIUA 5 · VANZARE", "HOOK: Daca vrei ca botezul sa aiba un fir vizual de la primul pana la ultimul detaliu.", "Prezinta un set sau produs real si ce poate fi personalizat.", "CTA: Scrie-mi BOTEZ si iti trimit variantele."],
+      ["ZIUA 6 · DOVADA", "HOOK: Detaliul pe care parintii il observa abia cand primesc comanda.", "Arata ambalarea, personalizarea sau un feedback real.", "CTA: Spune-mi luna botezului si iti spun ce poti rezerva."],
+      ["ZIUA 7 · REPETA", "HOOK: Varianta care v-a placut merita sa o ducem un pas mai departe.", "Creeaza o noua varianta pornind de la tema cu cele mai bune semnale.", "CTA: Scrie PARTEA 2 daca vrei continuarea."]
+    ],
+    gifts: [
+      ["ZIUA 1 · CARUSEL", "HOOK: Cel mai greu cadou nu este cel scump. Este cel care pare ales pentru oricine.", "Prezinta 3 idei pentru 3 tipuri diferite de persoane.", "CTA: Spune-mi pentru cine cauti cadoul."],
+      ["ZIUA 2 · REEL", "HOOK: Iti arat cadoul inainte sa ajunga la persoana care il va primi.", "Filmeaza produsul, personalizarea si ambalarea.", "CTA: Scrie-mi CADOU si iti propun idei."],
+      ["ZIUA 3 · EDUCATIV", "HOOK: Cum alegi un cadou personalizat fara sa dai gres?", "Explica 3 intrebari: pentru cine, cu ce ocazie, ce stil are.", "CTA: Salveaza postarea pentru urmatoarea ocazie."],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Ai prefera un cadou util sau unul sentimental?", "Arata cate un exemplu real.", "CTA: UTIL sau SENTIMENTAL?"],
+      ["ZIUA 5 · VANZARE", "HOOK: Daca ai o persoana imposibil de cumparat, incepe de aici.", "Prezinta un produs real si ocaziile pentru care este potrivit.", "CTA: Scrie CADOU si spune-mi ocazia."],
+      ["ZIUA 6 · DOVADA", "HOOK: Nu produsul este partea cea mai frumoasa. Reactia celui care il primeste este.", "Foloseste continut real sau feedback real.", "CTA: Spune-mi ocazia si iti recomand o varianta."],
+      ["ZIUA 7 · REPETA", "HOOK: Unul dintre produsele care a atras reactii merita o idee noua.", "Creeaza o noua varianta a produsului care a functionat.", "CTA: Ce varianta ai vrea sa vezi?"]
+    ],
+    beauty: [
+      ["ZIUA 1 · EDUCATIV", "HOOK: Daca rezultatul tau nu rezista cum vrei, s-ar putea sa faci aceasta greseala.", "Explica o problema frecventa din serviciul tau si arata solutia.", "CTA: Spune-mi daca ti se intampla."],
+      ["ZIUA 2 · REEL", "HOOK: Uite diferenta pe care o face un profesionist in primele 30 de secunde.", "Arata procesul sau before/after real, cu acordul clientului.", "CTA: Scrie PROGRAMARE pentru disponibilitate."],
+      ["ZIUA 3 · MIT", "HOOK: 3 lucruri pe care probabil le faci gresit fara sa-ti dai seama.", "Explica 3 greseli concrete din nisa.", "CTA: Care te-a surprins? 1, 2 sau 3."],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Ce ai alege pentru urmatoarea ta programare?", "Arata doua rezultate sau servicii reale.", "CTA: A sau B?"],
+      ["ZIUA 5 · SERVICIU", "HOOK: Daca vrei un rezultat vizibil, acesta este serviciul pe care l-as lua in calcul.", "Explica pentru cine este serviciul, ce include si cum se face programarea.", "CTA: Scrie PROGRAMARE."],
+      ["ZIUA 6 · DOVADA", "HOOK: Rezultatul real spune mai mult decat 10 promisiuni.", "Arata un rezultat real si explica procesul.", "CTA: Vrei sa vedem daca este potrivit pentru tine? Scrie-mi."],
+      ["ZIUA 7 · FAQ", "HOOK: Intrebarea pe care o primesc cel mai des este.", "Raspunde unei intrebari reale primite de la clienti.", "CTA: Lasa urmatoarea intrebare in comentarii."]
+    ],
+    food: [
+      ["ZIUA 1 · CARUSEL", "HOOK: Daca iti place acest produs, trebuie sa vezi cum il pregatim.", "Arata ingredientele, procesul si produsul final.", "CTA: Ai incerca? DA sau NU."],
+      ["ZIUA 2 · REEL", "HOOK: Sunetul pe care il auzi cand apare partea cea mai buna.", "Filmeaza cadre apetisante din preparare si produsul final.", "CTA: Trimite Reel-ul persoanei cu care ai imparti portia."],
+      ["ZIUA 3 · EDUCATIV", "HOOK: De ce nu iese acasa la fel? Iata secretul.", "Explica un pas concret al prepararii.", "CTA: Salveaza pentru data viitoare."],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Cu ce ai incepe: A sau B?", "Arata doua produse reale.", "CTA: Voteaza A sau B."],
+      ["ZIUA 5 · VANZARE", "HOOK: Daca ti-am facut pofta, partea buna este ca il poti comanda.", "Prezinta produsul, optiunile, pretul si modul de comanda.", "CTA: Scrie COMANDA."],
+      ["ZIUA 6 · DOVADA", "HOOK: Ce spun clientii dupa prima imbucatura.", "Foloseste feedback real, fara citate inventate.", "CTA: Vrei sa incerci? Scrie-mi."],
+      ["ZIUA 7 · REPETA", "HOOK: Produsul care v-a facut sa opriti scroll-ul merita o noua versiune.", "Reia produsul sau formatul cu un unghi nou.", "CTA: Ce varianta ai testa?"]
+    ],
+    home: [
+      ["ZIUA 1 · INSPIRATIE", "HOOK: Casa ta nu are nevoie de mai multe obiecte. Are nevoie de detalii care spun ceva despre tine.", "Arata 3 produse in contexte reale.", "CTA: Pe care l-ai pune la tine acasa: 1, 2 sau 3?"],
+      ["ZIUA 2 · REEL", "HOOK: Uite cum se schimba un colt al casei in cateva secunde.", "Fa un before/after cu produsul tau.", "CTA: Salveaza ideea pentru urmatoarea schimbare de decor."],
+      ["ZIUA 3 · EDUCATIV", "HOOK: 3 greseli care fac un decor sa para incarcat.", "Explica 3 principii simple si arata exemple.", "CTA: Salveaza postarea."],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Minimalist sau cozy?", "Arata doua stiluri reale.", "CTA: Scrie stilul tau in comentarii."],
+      ["ZIUA 5 · VANZARE", "HOOK: Daca ai un colt care pare ca ii lipseste ceva, incepe cu acest detaliu.", "Prezinta un produs si beneficiul lui.", "CTA: Scrie DETALII."],
+      ["ZIUA 6 · DOVADA", "HOOK: Asa arata produsul in casa unui client.", "Foloseste continut real trimis de client, cu acordul lui.", "CTA: Trimite-mi o poza si iti spun cum s-ar potrivi."],
+      ["ZIUA 7 · REPETA", "HOOK: Varianta care a atras cele mai bune reactii primeste o continuare.", "Reia stilul sau formatul cu o noua combinatie.", "CTA: Ce combinatie vrei sa vezi?"]
+    ],
+    services: [
+      ["ZIUA 1 · PROBLEMA", "HOOK: Daca pierzi timp cu problema pe care o rezolv eu, exista o varianta mai simpla.", "Descrie problema clientului ideal si explica solutia serviciului.", "CTA: Scrie SOLUTIE si iti explic cum functioneaza."],
+      ["ZIUA 2 · REEL", "HOOK: Asta se intampla in spatele unui rezultat bun.", "Arata procesul, instrumentele si pasii principali.", "CTA: Urmareste pagina pentru mai multe exemple."],
+      ["ZIUA 3 · EDUCATIV", "HOOK: 3 semne ca ai nevoie de serviciul meu.", "Arata 3 probleme concrete pe care clientul le poate recunoaste.", "CTA: Care dintre ele te descrie?"],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Care este cea mai mare problema pe care ai vrea sa o rezolvi acum?", "Invita publicul sa descrie problema fara sa vinzi direct.", "CTA: Scrie problema in comentarii."],
+      ["ZIUA 5 · OFERTA", "HOOK: Daca vrei rezultatul dorit, uite exact ce primesti.", "Prezinta serviciul, procesul, ce include si urmatorul pas.", "CTA: Scrie INFO pentru detalii."],
+      ["ZIUA 6 · DOVADA", "HOOK: Inainte si dupa: ce s-a schimbat dupa ce am lucrat impreuna.", "Foloseste un caz real si date reale.", "CTA: Vrei sa vedem daca te pot ajuta? Scrie-mi."],
+      ["ZIUA 7 · FAQ", "HOOK: Daca te gandesti sa apelezi la serviciul meu, probabil ai aceasta intrebare.", "Raspunde unei intrebari reale primite de la clienti.", "CTA: Lasa-mi urmatoarea intrebare."]
+    ],
+    other: [
+      ["ZIUA 1 · PROBLEMA", "HOOK: Daca te confrunti cu problema pe care o rezolva aceasta pagina, postarea aceasta este pentru tine.", "Explica problema, solutia si arata un exemplu real.", "CTA: Spune-mi in comentarii daca te confrunti cu asta."],
+      ["ZIUA 2 · REEL", "HOOK: Uite ce se intampla in spatele rezultatului pe care il vezi aici.", "Filmeaza procesul real.", "CTA: Urmareste pagina pentru urmatoarea parte."],
+      ["ZIUA 3 · EDUCATIV", "HOOK: 3 lucruri pe care as vrea sa le stii inainte sa alegi produsul sau serviciul meu.", "Ofera 3 recomandari concrete din nisa paginii.", "CTA: Salveaza postarea."],
+      ["ZIUA 4 · CONVERSATIE", "HOOK: Am nevoie de parerea ta: A sau B?", "Arata doua optiuni reale din nisa.", "CTA: Voteaza A sau B."],
+      ["ZIUA 5 · VANZARE", "HOOK: Daca vrei rezultatul dorit, acesta este un punct bun de pornire.", "Prezinta oferta reala si exact ce primeste clientul.", "CTA: Scrie INFO pentru detalii."],
+      ["ZIUA 6 · DOVADA", "HOOK: Nu vreau sa-ti spun doar eu ca functioneaza. Uite un exemplu real.", "Arata un rezultat sau testimonial real.", "CTA: Vrei sa afli daca ti se potriveste? Scrie-mi."],
+      ["ZIUA 7 · REPETA", "HOOK: Tema care a atras cele mai bune semnale merita testata din nou.", "Reia categoria cu cea mai buna medie, schimbind hook-ul si exemplul.", "CTA: Ce varianta ai vrea sa vezi?"]
+    ]
+  };
+
+  const days = common[key] || common.other;
+  return {
+    niche: key,
+    goal: goal || "",
+    bestSignal: bestCategory ? "Categoria cu cea mai buna medie: " + bestCategory.category : "Nu exista inca o categorie cu suficiente date.",
+    referencePost: topPost ? String(topPost.message || "").replace(/\s+/g, " ").slice(0, 140) : null,
+    days: days.map(x => ({ day: x[0], hook: x[1], content: x[2], cta: x[3] }))
   };
 }
 
