@@ -230,11 +230,13 @@ app.post("/api/analyze", async (req, res) => {
     // Luăm postările recente. Meta poate returna feed-ul cu succes chiar dacă
     // nu include toate câmpurile de engagement, așa că îmbogățim separat fiecare
     // postare atunci când engagement-ul nu este deja disponibil.
-    const feedFields = "id,message,created_time,permalink_url,type,status_type,reactions.limit(0).summary(true),comments.limit(0).summary(true),shares";
+    const feedFields = "id,message,created_time,permalink_url";
     try {
-      const feed = await metaGet(`${page.id}/feed`, {
+      const feed = await metaGet(`${page.id}/posts`, {
         access_token: token,
         fields: feedFields,
+        since: String(since),
+        until: String(until),
         limit: "50"
       });
       result.posts = feed.data || [];
