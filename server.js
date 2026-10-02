@@ -231,7 +231,7 @@ app.post("/api/analyze", async (req, res) => {
     try {
       const feed = await metaGet(`${page.id}/feed`, {
         access_token: token,
-        fields: "id,message,created_time,permalink_url,type,status_type,reactions.summary(true),comments.summary(true),shares",
+        fields: "id,message,created_time,permalink_url,type,status_type,likes.limit(0).summary(true),comments.limit(0).summary(true),shares",
         limit: "50"
       });
       result.posts = feed.data || [];
