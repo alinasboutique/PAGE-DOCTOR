@@ -231,7 +231,7 @@ app.post("/api/analyze", async (req, res) => {
     try {
       const feed = await metaGet(`${page.id}/feed`, {
         access_token: token,
-        fields: "id,message,created_time,permalink_url,reactions.summary(true),comments.summary(true),shares",
+        fields: "id,message,created_time,permalink_url,type,status_type,reactions.summary(true),comments.summary(true),shares",
         limit: "50"
       });
       result.posts = feed.data || [];
@@ -249,7 +249,7 @@ app.post("/api/analyze", async (req, res) => {
       }
     }
 
-    result.diagnostic = buildDiagnostic(result.insights, result.posts);
+    result.diagnostic = buildDiagnostic(result.insights, result.posts, result.page);
     res.json(result);
   } catch (e) {
     console.error("Analyze error:", e.meta || e);
@@ -271,44 +271,137 @@ function getPostEngagement(post) {
   return { reactions, comments, shares, total: reactions + comments + shares };
 }
 
-function buildDiagnostic(insights, posts = []) {
+function classifyPost(post) {
+  const text = String(post?.message || "").toLowerCase();
+  const type = String(post?.type || "").toLowerCase();
+  const status = String(post?.status_type || "").toLowerCase();
+
+  if (type.includes("video") || status.includes("video") || type.includes("reel")) return "Reels / Video";
+  if (/\b(comand|comenzi|preț|pret|ofert|disponibil|livrare|cumpăr|cumpar|personalizat|set|produs|catalog|rezerv)/i.test(text)) return "Vânzare / Produs";
+  if (/\b(cum |cum să|cum sa|tutorial|sfat|tips|idee|învață|invata|pas cu pas|truc)/i.test(text)) return "Educațional";
+  if (/\b(eu |noi |poveste|culise|atelier|azi am|astăzi|astazi|munca mea|în spatele|in spatele)/i.test(text)) return "Poveste / Culise";
+  if (/\b(voi|tu ce|ce preferi|spune-mi|spune mi|alege|comentează|comenteaza|întrebare|intrebare|părere|parere)/i.test(text)) return "Comunitate / Conversație";
+  return "Inspirație / Prezentare";
+}
+
+function score10(value, thresholds) {
+  for (const t of thresholds) if (value <= t.max) return t.score;
+  return 10;
+}
+
+function buildDiagnostic(insights, posts = [], pageInfo = {}) {
   const available = insights.filter(x => !x.unavailable);
   const hasData = available.some(x => Array.isArray(x.data) && x.data.length);
-  const analyzedPosts = posts.map(p => ({ ...p, engagement: getPostEngagement(p) }));
-  const withEngagement = analyzedPosts.filter(p => p.engagement.total > 0);
+  const followers = Number(pageInfo?.followers_count || pageInfo?.fan_count || 0);
+
+  const analyzedPosts = posts.map(p => ({
+    ...p,
+    category: classifyPost(p),
+    engagement: getPostEngagement(p)
+  }));
+
   const totalEngagement = analyzedPosts.reduce((sum, p) => sum + p.engagement.total, 0);
   const avgEngagement = analyzedPosts.length ? totalEngagement / analyzedPosts.length : 0;
-  const topPosts = [...analyzedPosts].sort((a, b) => b.engagement.total - a.engagement.total).slice(0, 3);
+  const postsWithEngagement = analyzedPosts.filter(p => p.engagement.total > 0).length;
+  const conversationPosts = analyzedPosts.filter(p => p.engagement.comments > 0 || p.engagement.shares > 0).length;
 
-  const mediaViews = getInsightTotal(insights.find(x => x.metric === "page_media_view"));
-  const uniqueViews = getInsightTotal(insights.find(x => x.metric === "page_total_media_view_unique"));
-  const follows = getInsightTotal(insights.find(x => x.metric === "page_follows"));
+  const byCategory = {};
+  analyzedPosts.forEach(p => {
+    if (!byCategory[p.category]) byCategory[p.category] = { count: 0, engagement: 0, comments: 0, shares: 0 };
+    byCategory[p.category].count++;
+    byCategory[p.category].engagement += p.engagement.total;
+    byCategory[p.category].comments += p.engagement.comments;
+    byCategory[p.category].shares += p.engagement.shares;
+  });
 
-  const priorities = [];
+  const categoryStats = Object.entries(byCategory)
+    .map(([category, v]) => ({
+      category,
+      count: v.count,
+      avgEngagement: v.count ? v.engagement / v.count : 0,
+      comments: v.comments,
+      shares: v.shares
+    }))
+    .sort((a,b) => b.avgEngagement - a.avgEngagement);
+
+  const eligibleCategories = categoryStats.filter(x => x.count >= 2);
+  const bestCategory = eligibleCategories[0] || categoryStats[0] || null;
+  const weakestCategory = eligibleCategories.length > 1 ? [...eligibleCategories].sort((a,b) => a.avgEngagement - b.avgEngagement)[0] : null;
+
+  const recentDates = analyzedPosts.map(p => new Date(p.created_time)).filter(d => !Number.isNaN(d.getTime())).sort((a,b) => a-b);
+  const activeWeeks = new Set(recentDates.map(d => {
+    const day = d.getUTCDay() || 7;
+    const monday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - day + 1));
+    return monday.toISOString().slice(0,10);
+  })).size;
+  const consistencyScore = Math.min(10, Math.max(1, activeWeeks * 2.5));
+
+  const engagementPerFollower = followers && analyzedPosts.length ? (avgEngagement / followers) * 100;
+  const engagementScore = followers
+    ? score10(engagementPerFollower, [
+        {max:0.05,score:3},{max:0.10,score:4},{max:0.20,score:5},{max:0.40,score:6},
+        {max:0.70,score:7},{max:1.20,score:8},{max:2.00,score:9}
+      ])
+    : null;
+
+  const commentsSharesRate = analyzedPosts.length ? (conversationPosts / analyzedPosts.length) * 100 : 0;
+  const conversationScore = score10(commentsSharesRate, [
+    {max:5,score:2},{max:10,score:3},{max:20,score:4},{max:30,score:5},
+    {max:40,score:6},{max:55,score:7},{max:70,score:8},{max:85,score:9}
+  ]);
+
+  const contentMixScore = Math.min(10, Math.max(2, Object.keys(byCategory).length * 2));
+
+  const dailyUnique = (insights.find(x => x.metric === "page_total_media_view_unique")?.data || [])
+    .flatMap(x => Array.isArray(x.values) ? x.values : [])
+    .map(x => typeof x.value === "number" ? x.value : null).filter(x => x !== null);
+  const medianUnique = dailyUnique.length ? [...dailyUnique].sort((a,b)=>a-b)[Math.floor(dailyUnique.length/2)] : null;
+  const visibilityPerFollower = followers && medianUnique !== null ? (medianUnique / followers) * 100 : null;
+  const visibilityScore = visibilityPerFollower === null ? null : score10(visibilityPerFollower, [
+    {max:2,score:3},{max:5,score:4},{max:10,score:5},{max:20,score:6},
+    {max:35,score:7},{max:50,score:8},{max:75,score:9}
+  ]);
+
+  const scores = [
+    { label: "Vizibilitate", score: visibilityScore, reason: visibilityScore === null ? "Nu avem suficiente date pentru un scor sigur." : "Bazat pe vizibilitatea zilnică disponibilă raportată la baza de urmăritori." },
+    { label: "Reacția publicului", score: engagementScore, reason: engagementScore === null ? "Numărul de urmăritori nu este disponibil pentru calcul." : "Bazat pe interacțiunile publice medii raportate la baza de urmăritori." },
+    { label: "Consecvență", score: consistencyScore, reason: "Bazat pe distribuția postărilor în perioada analizată." },
+    { label: "Conversație", score: conversationScore, reason: "Bazat pe proporția postărilor care au primit comentarii sau distribuiri." },
+    { label: "Diversitatea conținutului", score: contentMixScore, reason: "Bazat pe tipurile de conținut identificate în postările analizate." }
+  ].filter(x => x.score !== null);
+
+  const overallScore = scores.length ? Math.round((scores.reduce((a,b)=>a+b.score,0)/scores.length)*10)/10 : null;
+
   const strengths = [];
   const blockers = [];
+  const priorities = [];
 
-  if (mediaViews !== null) strengths.push(`Pagina a avut aproximativ ${Math.round(mediaViews).toLocaleString("ro-RO")} vizualizări cumulate în perioada analizată.`);
-  if (uniqueViews !== null) strengths.push(`Am primit și date despre aproximativ ${Math.round(uniqueViews).toLocaleString("ro-RO")} persoane unice care au văzut conținutul.`);
-  if (withEngagement.length) strengths.push(`${withEngagement.length} dintre cele ${analyzedPosts.length} postări analizate au primit cel puțin o interacțiune publică.`);
-  if (!withEngagement.length && analyzedPosts.length) blockers.push("Postările recente nu au furnizat suficiente semnale publice de engagement pentru a identifica un format câștigător.");
+  if (bestCategory) strengths.push(`În eșantionul analizat, „${bestCategory.category}” are cea mai mare medie de interacțiuni: ${Math.round(bestCategory.avgEngagement).toLocaleString("ro-RO")} / postare.`);
+  if (postsWithEngagement && analyzedPosts.length) strengths.push(`${postsWithEngagement} din ${analyzedPosts.length} postări au primit cel puțin o interacțiune publică.`);
+  if (conversationPosts) strengths.push(`${conversationPosts} postări au generat comentarii sau distribuiri — acestea sunt semnale mai puternice de conversație decât simpla reacție.`);
 
-  if (analyzedPosts.length < 10) blockers.push("Meta a returnat un eșantion mic de postări; concluziile despre conținut trebuie tratate ca orientative.");
-  if (follows === null) blockers.push("Nu avem încă o serie completă pentru urmăririle paginii, deci nu calculăm artificial o rată de creștere.");
-  if (mediaViews !== null && analyzedPosts.length) priorities.push("Compară vizibilitatea totală cu tipurile de postări care au generat cele mai multe interacțiuni.");
-  if (withEngagement.length) priorities.push("Repetă temele și formatele postărilor din topul de engagement, fără să copiezi mecanic conținutul.");
-  priorities.push("În următoarele 7 zile testează o singură ipoteză de conținut și urmărește vizibilitatea + reacțiile + comentariile.");
-  if (!priorities.length) priorities.push("Mai întâi trebuie să strângem suficiente date Meta pentru o analiză comparativă.");
+  if (weakestCategory && avgEngagement > 0 && weakestCategory.avgEngagement < avgEngagement * 0.7) {
+    const pct = Math.round((1 - weakestCategory.avgEngagement / avgEngagement) * 100);
+    blockers.push(`„${weakestCategory.category}” este cu aproximativ ${pct}% sub media de interacțiuni a paginii în acest eșantion. Merită testat alt unghi, hook sau format înainte să continui aceeași abordare.`);
+  }
+  if (!conversationPosts && analyzedPosts.length) blockers.push("Postările analizate generează reacții, dar foarte puține comentarii sau distribuiri. Asta sugerează că merită testate CTA-uri care cer un răspuns sau o alegere.");
+  if (analyzedPosts.length < 20) blockers.push("Eșantionul este mai mic de 20 de postări, deci concluziile despre ce prinde cel mai bine sunt încă orientative.");
+
+  if (bestCategory) priorities.push(`Crește ponderea testată a „${bestCategory.category}”, dar verifică rezultatul pe încă 5–10 postări înainte de a trage concluzia finală.`);
+  if (weakestCategory && weakestCategory.category !== bestCategory?.category) priorities.push(`Nu repeta mecanic formatul „${weakestCategory.category}”; schimbă hook-ul, structura sau CTA-ul și compară din nou rezultatele.`);
+  priorities.push("Construiește următoarele 7 zile în jurul unui singur obiectiv: vizibilitate, conversații sau comenzi — nu toate simultan.");
 
   const plan = [
-    "Ziua 1: alege o temă principală și un obiectiv clar pentru conținut.",
-    "Ziua 2: publică o postare utilă sau educativă și urmărește reacțiile.",
-    "Ziua 3: publică un Reel/video scurt și notează vizibilitatea.",
-    "Ziua 4: publică o postare de poveste sau din culise pentru conversații.",
-    "Ziua 5: publică o ofertă/produs cu un singur CTA clar.",
-    "Ziua 6: repetă formatul care a primit cele mai bune semnale în primele zile.",
-    "Ziua 7: compară rezultatele și păstrează pentru săptămâna următoare ce a funcționat mai bine."
+    "Ziua 1: păstrează un format apropiat de categoria care a avut cea mai bună medie.",
+    "Ziua 2: testează un hook diferit pe aceeași temă.",
+    "Ziua 3: publică un Reel/video scurt și urmărește reacția.",
+    "Ziua 4: publică o postare care cere explicit o opinie sau alegere.",
+    "Ziua 5: prezintă produsul/oferta cu un singur CTA.",
+    "Ziua 6: repetă varianta care a generat cele mai multe comentarii sau distribuiri.",
+    "Ziua 7: compară rezultatele și decide ce merită repetat în săptămâna următoare."
   ];
+
+  const topPosts = [...analyzedPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5);
 
   return {
     dataAvailable: hasData || analyzedPosts.length > 0,
@@ -317,14 +410,21 @@ function buildDiagnostic(insights, posts = []) {
     postsAnalyzed: analyzedPosts.length,
     totalEngagement,
     avgEngagement,
+    scores,
+    overallScore,
+    contentCategories: categoryStats,
+    bestCategory,
+    weakestCategory,
     strengths,
     blockers,
-    priorities,
+    priorities: priorities.slice(0,3),
     plan,
     topPosts: topPosts.map(p => ({
       id: p.id,
       message: String(p.message || "").slice(0, 180),
       created_time: p.created_time,
+      category: p.category,
+      type: p.type || null,
       engagement: p.engagement,
       permalink_url: p.permalink_url || null
     }))
