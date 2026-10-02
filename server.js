@@ -72,6 +72,7 @@ app.get("/auth/meta", (req, res) => {
   url.searchParams.set("state", state);
   
   url.searchParams.set("response_type", "code");
+  url.searchParams.set("override_default_response_type", "true");
   res.redirect(url.toString());
 });
 
