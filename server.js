@@ -70,7 +70,7 @@ app.get("/auth/meta", (req, res) => {
   url.searchParams.set("config_id", META_CONFIG_ID);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
-  url.searchParams.set("scope", scopes);
+  
   url.searchParams.set("response_type", "code");
   res.redirect(url.toString());
 });
