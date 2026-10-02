@@ -141,7 +141,7 @@ console.log("META USER:", {
 
 const pages = await metaGet("/me/accounts", {
   access_token: activeToken,
-  fields: "id,name,tasks"
+  fields: "id,name,access_token,tasks"
 });
 
 console.log("META PAGES:", (pages.data || []).map(p => ({
