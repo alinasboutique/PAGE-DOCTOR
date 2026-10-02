@@ -5,8 +5,8 @@
 <title>Page Doctor</title>
 <style>
 :root{--bg:#fbf7f2;--card:#fff;--ink:#292525;--muted:#756d68;--accent:#d9777b;--accent2:#7d9b84;--line:#eadfd7;--soft:#f7eee9;--gold:#c8954a}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fbf7f2 0,#fff 100%);color:var(--ink);font-family:Inter,Arial,sans-serif}.wrap{max-width:980px;margin:auto;padding:42px 20px 70px}.hero{text-align:center;max-width:760px;margin:auto}.badge{display:inline-block;padding:7px 13px;border-radius:999px;background:#efe2db;color:#765b52;font-size:12px;font-weight:800;letter-spacing:.3px}.hero h1{font-size:44px;line-height:1.05;margin:16px 0 10px}.hero p{font-size:17px;line-height:1.65;color:var(--muted);margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px;margin-top:24px;box-shadow:0 12px 35px #0000000a}.card h2{margin:0 0 7px;font-size:23px}.sub{color:var(--muted);line-height:1.55;margin-top:0}.urlbox{display:flex;gap:10px;margin-top:22px}.urlbox input{flex:1}.input,select{width:100%;padding:14px 15px;border:1px solid #d8cdc5;border-radius:12px;font-size:15px;background:#fff;color:var(--ink);outline:none}.input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #d9777b18}.btn{border:0;border-radius:12px;padding:14px 20px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:15px;white-space:nowrap}.btn:hover{filter:brightness(.97)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.label{display:block;font-weight:800;margin:0 0 7px;font-size:14px}.error{color:#a4484d;background:#f8dfe0;border-radius:10px;padding:11px 13px;margin-top:12px;display:none}.success{background:#eef6ef;border:1px solid #d7e7da;color:#4d6d54;border-radius:14px;padding:14px 16px;margin-top:16px;line-height:1.5}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}.step{padding:15px;background:#faf7f4;border-radius:14px;border:1px solid var(--line)}.step b{display:block;margin-bottom:6px}.step span{font-size:13px;color:var(--muted);line-height:1.45}.notice{display:flex;gap:12px;align-items:flex-start;background:#fff8eb;border:1px solid #f0dfbc;border-radius:14px;padding:15px;margin-top:18px}.notice p{margin:0;color:#76634b;font-size:13px;line-height:1.5}.resulthead{display:flex;justify-content:space-between;gap:20px;align-items:center}.mini{font-size:12px;color:var(--muted)}.diagnostic{margin-top:18px}.priority{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#faf7f4;margin-top:10px}.hidden{display:none}
-@media(max-width:700px){.hero h1{font-size:34px}.urlbox,.grid,.steps{grid-template-columns:1fr;display:grid}.urlbox{display:flex;flex-direction:column}.resulthead{flex-direction:column;align-items:flex-start}}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fbf7f2 0,#fff 100%);color:var(--ink);font-family:Inter,Arial,sans-serif}.wrap{max-width:980px;margin:auto;padding:42px 20px 70px}.hero{text-align:center;max-width:760px;margin:auto}.badge{display:inline-block;padding:7px 13px;border-radius:999px;background:#efe2db;color:#765b52;font-size:12px;font-weight:800;letter-spacing:.3px}.hero h1{font-size:44px;line-height:1.05;margin:16px 0 10px}.hero p{font-size:17px;line-height:1.65;color:var(--muted);margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px;margin-top:24px;box-shadow:0 12px 35px #0000000a}.card h2{margin:0 0 7px;font-size:23px}.sub{color:var(--muted);line-height:1.55;margin-top:0}.urlbox{display:flex;gap:10px;margin-top:22px}.urlbox input{flex:1}.input,select{width:100%;padding:14px 15px;border:1px solid #d8cdc5;border-radius:12px;font-size:15px;background:#fff;color:var(--ink);outline:none}.input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #d9777b18}.btn{border:0;border-radius:12px;padding:14px 20px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:15px;white-space:nowrap}.btn:hover{filter:brightness(.97)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.label{display:block;font-weight:800;margin:0 0 7px;font-size:14px}.error{color:#a4484d;background:#f8dfe0;border-radius:10px;padding:11px 13px;margin-top:12px;display:none}.success{background:#eef6ef;border:1px solid #d7e7da;color:#4d6d54;border-radius:14px;padding:14px 16px;margin-top:16px;line-height:1.5}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}.step{padding:15px;background:#faf7f4;border-radius:14px;border:1px solid var(--line)}.step b{display:block;margin-bottom:6px}.step span{font-size:13px;color:var(--muted);line-height:1.45}.notice{display:flex;gap:12px;align-items:flex-start;background:#fff8eb;border:1px solid #f0dfbc;border-radius:14px;padding:15px;margin-top:18px}.notice p{margin:0;color:#76634b;font-size:13px;line-height:1.5}.resulthead{display:flex;justify-content:space-between;gap:20px;align-items:center}.mini{font-size:12px;color:var(--muted)}.diagnostic{margin-top:18px}.priority{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#faf7f4;margin-top:10px}.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}.score-card{padding:15px;border:1px solid var(--line);border-radius:14px;background:#faf7f4;text-align:center}.score-number{font-size:30px;font-weight:900}.score-label{font-weight:800;font-size:13px;margin-top:4px}.score-reason{font-size:11px;color:var(--muted);line-height:1.35;margin-top:7px}.overall-score{font-size:40px;font-weight:900;margin:8px 0}.content-row{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#faf7f4;margin-top:10px;display:flex;justify-content:space-between;gap:15px}.content-row strong{font-size:15px}.content-row span{color:var(--muted);font-size:13px}.hidden{display:none}
+@media(max-width:700px){.hero h1{font-size:34px}.urlbox,.grid,.steps,.score-grid{grid-template-columns:1fr;display:grid}.urlbox{display:flex;flex-direction:column}.resulthead{flex-direction:column;align-items:flex-start}}
 </style>
 </head>
 <body>
@@ -41,7 +41,14 @@
 <div class="resulthead"><div><h2>🩺 Diagnosticul paginii</h2><div id="pageName" class="mini"></div></div><span class="badge">DATE REALE</span></div>
 <div id="summary" class="success"></div>
 <div class="grid" id="metrics"></div>
+<div class="diagnostic">
+<h3>🩺 Scorul paginii</h3>
+<div id="overallScore" class="overall-score"></div>
+<div id="scoreGrid" class="score-grid"></div>
+<div id="scoreNote" class="sub"></div>
+</div>
 <div class="diagnostic"><h3>📊 Ce funcționează</h3><div id="strengths"></div></div>
+<div class="diagnostic"><h3>🧠 Ce tip de conținut prinde cel mai bine</h3><div id="contentTypes"></div></div>
 <div class="diagnostic"><h3>⚠️ Ce te poate ține pe loc</h3><div id="blockers"></div></div>
 <div class="diagnostic"><h3>🎯 Primele 3 priorități</h3><div id="priorities"></div></div>
 <div class="diagnostic"><h3>🏆 Postările cu cele mai multe interacțiuni</h3><div id="topPosts"></div></div>
@@ -83,6 +90,24 @@ function addItems(id,items,empty){
 function showResult(d){
  document.getElementById('result').classList.remove('hidden');
  document.getElementById('pageName').textContent=d.page?.name||'Pagina conectată';
+ const overall=document.getElementById('overallScore');
+ overall.textContent=d.diagnostic?.overallScore ? d.diagnostic.overallScore.toFixed(1).replace('.',',')+'/10' : 'Scor indisponibil';
+ const sg=document.getElementById('scoreGrid'); sg.innerHTML='';
+ (d.diagnostic?.scores||[]).forEach(s=>{
+   const div=document.createElement('div');div.className='score-card';
+   div.innerHTML='<div class="score-number">'+Number(s.score).toLocaleString('ro-RO')+'/10</div><div class="score-label">'+s.label+'</div><div class="score-reason">'+s.reason+'</div>';
+   sg.appendChild(div);
+ });
+ document.getElementById('scoreNote').textContent='Scorurile sunt calculate din datele disponibile ale paginii și sunt orientative. Nu folosim un scor dacă Meta nu oferă baza necesară pentru calcul.';
+ const ct=document.getElementById('contentTypes'); ct.innerHTML='';
+ const cats=d.diagnostic?.contentCategories||[];
+ if(!cats.length) ct.innerHTML='<div class="priority">Nu avem suficiente date pentru a identifica tipurile de conținut.</div>';
+ else cats.forEach(c=>{
+   const div=document.createElement('div');div.className='content-row';
+   const mark=c.category===d.diagnostic?.bestCategory?.category?' ⭐':''; 
+   div.innerHTML='<div><strong>'+c.category+mark+'</strong><br><span>'+c.count+' postări analizate</span></div><div><strong>'+Math.round(c.avgEngagement).toLocaleString('ro-RO')+'</strong><br><span>interacțiuni medii/postare</span></div>';
+   ct.appendChild(div);
+ });
  const available=(d.insights||[]).filter(x=>!x.unavailable);
  const unavailable=(d.insights||[]).filter(x=>x.unavailable);
  document.getElementById('summary').innerHTML=d.diagnostic?.dataAvailable
