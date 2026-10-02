@@ -138,6 +138,16 @@ console.log("META PAGES:", (pages.data || []).map(p => ({
   name: p.name,
   tasks: p.tasks || []
 })));
+    try {
+  const directPage = await metaGet("/128420931070787", {
+    access_token: activeToken,
+    fields: "id,name"
+  });
+
+  console.log("DIRECT PAGE TEST:", directPage);
+} catch (e) {
+  console.error("DIRECT PAGE TEST FAILED:", e.meta || e);
+}
 
     // Do not put access tokens in the browser URL. For the first version,
     // the selected Page data is encoded into a short-lived server-side handoff.
