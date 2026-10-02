@@ -41,8 +41,12 @@
 <div class="resulthead"><div><h2>🩺 Diagnosticul paginii</h2><div id="pageName" class="mini"></div></div><span class="badge">DATE REALE</span></div>
 <div id="summary" class="success"></div>
 <div class="grid" id="metrics"></div>
-<div class="diagnostic"><h3>🎯 Priorități</h3><div id="priorities"></div></div>
-<div class="diagnostic"><h3>📌 Ce am analizat</h3><div id="analysisNote" class="sub"></div></div>
+<div class="diagnostic"><h3>📊 Ce funcționează</h3><div id="strengths"></div></div>
+<div class="diagnostic"><h3>⚠️ Ce te poate ține pe loc</h3><div id="blockers"></div></div>
+<div class="diagnostic"><h3>🎯 Primele 3 priorități</h3><div id="priorities"></div></div>
+<div class="diagnostic"><h3>🏆 Postările cu cele mai multe interacțiuni</h3><div id="topPosts"></div></div>
+<div class="diagnostic"><h3>📅 Planul tău pentru următoarele 7 zile</h3><div id="plan"></div></div>
+<div class="diagnostic"><h3>🔎 Ce am analizat</h3><div id="analysisNote" class="sub"></div></div>
 </section>
 </div>
 <script>
@@ -58,21 +62,23 @@ function startAnalysis(){
 }
 function metricLabel(metric){
  const labels={
-  page_total_media_view_unique:'Persoane care au văzut conținutul',
+  page_total_media_view_unique:'Persoane unice care au văzut conținutul',
   page_media_view:'Vizualizări ale conținutului',
   page_follows:'Urmăriri ale paginii'
  };
- return labels[metric]||metric;
+ return labels[metric]||'Indicator Meta';
 }
 function metricValue(x){
  if(x.unavailable)return 'Date indisponibile în acest moment';
- const rows=Array.isArray(x.data)?x.data:[];
- const values=rows.flatMap(r=>Array.isArray(r.values)?r.values:[]);
- if(!values.length)return 'Date disponibile, dar fără valori afișabile';
- const last=values[values.length-1]?.value;
- if(typeof last==='number')return last.toLocaleString('ro-RO');
- if(last&&typeof last==='object')return Object.entries(last).map(([k,v])=>k+': '+Number(v).toLocaleString('ro-RO')).join(' · ');
- return String(last??'Date disponibile');
+ const values=(x.data||[]).flatMap(r=>Array.isArray(r.values)?r.values:[]).map(v=>v.value).filter(v=>typeof v==='number');
+ if(!values.length)return 'Date disponibile, dar fără valori numerice afișabile';
+ const total=values.reduce((a,b)=>a+b,0);
+ return total.toLocaleString('ro-RO');
+}
+function addItems(id,items,empty){
+ const el=document.getElementById(id); el.innerHTML='';
+ if(!items||!items.length){el.innerHTML='<div class="priority">'+empty+'</div>';return}
+ items.forEach(x=>{const div=document.createElement('div');div.className='priority';div.textContent='• '+x;el.appendChild(div)});
 }
 function showResult(d){
  document.getElementById('result').classList.remove('hidden');
@@ -80,18 +86,28 @@ function showResult(d){
  const available=(d.insights||[]).filter(x=>!x.unavailable);
  const unavailable=(d.insights||[]).filter(x=>x.unavailable);
  document.getElementById('summary').innerHTML=d.diagnostic?.dataAvailable
- ? '<strong>✓ Analiza a primit date reale de la Meta.</strong><br>Mai jos vezi indicatorii disponibili și primele concluzii pentru pagina ta.'
- : '<strong>Conectarea a reușit, dar Meta nu oferă încă suficiente date Insights.</strong><br>Vom păstra doar indicatorii disponibili și nu vom inventa rezultate.';
+ ? '<strong>✓ Analiza a primit date reale de la Meta.</strong><br>Am verificat o perioadă de până la 28 de zile și postările recente disponibile.'
+ : '<strong>Conectarea a reușit, dar Meta nu oferă încă suficiente date.</strong><br>Nu inventăm concluzii atunci când datele lipsesc.';
  const m=document.getElementById('metrics');m.innerHTML='';
  (d.insights||[]).forEach(x=>{
    const div=document.createElement('div');div.className='step';
-   div.innerHTML='<b>'+metricLabel(x.metric)+'</b><span>'+metricValue(x)+(x.unavailable?'':'<br><small>'+((x.data||[]).length)+' perioade de date primite</small>')+'</span>';
+   div.innerHTML='<b>'+metricLabel(x.metric)+'</b><span>'+metricValue(x)+(x.unavailable?'':'<br><small>Totalul valorilor zilnice primite</small>')+'</span>';
    m.appendChild(div);
  });
- const p=document.getElementById('priorities');p.innerHTML='';
- (d.diagnostic?.priorities||[]).forEach(x=>{const div=document.createElement('div');div.className='priority';div.textContent='• '+x;p.appendChild(div)});
- const note=document.getElementById('analysisNote');
- note.textContent='Am analizat '+available.length+' indicatori Meta disponibili și '+(d.posts?.length||0)+' postări recente. '+(unavailable.length?' '+unavailable.length+' indicatori nu sunt disponibili pentru această pagină și nu sunt folosiți în concluzii.':'');
+ addItems('strengths',d.diagnostic?.strengths,'Nu avem încă suficiente date pentru a identifica un punct forte clar.');
+ addItems('blockers',d.diagnostic?.blockers,'Nu a fost identificat un blocaj clar din datele disponibile.');
+ addItems('priorities',d.diagnostic?.priorities,'Mai avem nevoie de date pentru priorități.');
+ addItems('plan',d.diagnostic?.plan,'Planul va apărea după analiză.');
+ const top=document.getElementById('topPosts'); top.innerHTML='';
+ const tops=d.diagnostic?.topPosts||[];
+ if(!tops.length) top.innerHTML='<div class="priority">Nu am primit suficiente date publice de engagement pentru a compara postările.</div>';
+ else tops.forEach((p,n)=>{
+   const div=document.createElement('div');div.className='priority';
+   const text=(p.message||'Postare fără text').replace(/\s+/g,' ').trim();
+   div.innerHTML='<strong>#'+(n+1)+' — '+Number(p.engagement?.total||0).toLocaleString('ro-RO')+' interacțiuni</strong><br><span>'+text.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</span>';
+   top.appendChild(div);
+ });
+ document.getElementById('analysisNote').textContent='Am analizat până la 28 de zile de Insights disponibile și '+(d.diagnostic?.postsAnalyzed||0)+' postări recente. '+(unavailable.length?' '+unavailable.length+' indicatori Meta nu au fost disponibili și nu sunt folosiți în concluzii.':'');
  document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
 const stored=sessionStorage.getItem('pageDoctorResult');
