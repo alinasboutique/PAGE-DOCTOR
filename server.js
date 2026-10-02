@@ -372,10 +372,10 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
       comments: v.comments,
       shares: v.shares
     }))
-    .sort((a,b) => b.avgEngagement - a.avgEngagement);
+    .sort((a,b) => (b.avgEngagement ?? -1) - (a.avgEngagement ?? -1));
 
   const eligibleCategories = categoryStats.filter(x => x.engagementCount >= 2 && x.avgEngagement !== null);
-  const bestCategory = eligibleCategories[0] || categoryStats[0] || null;
+  const bestCategory = eligibleCategories[0] || null;
   const weakestCategory = eligibleCategories.length > 1 ? [...eligibleCategories].sort((a,b) => a.avgEngagement - b.avgEngagement)[0] : null;
 
   const recentDates = analyzedPosts.map(p => new Date(p.created_time)).filter(d => !Number.isNaN(d.getTime())).sort((a,b) => a-b);
@@ -426,7 +426,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
   const blockers = [];
   const priorities = [];
 
-  if (bestCategory) strengths.push(`În eșantionul analizat, „${bestCategory.category}” are cea mai mare medie de interacțiuni: ${Math.round(bestCategory.avgEngagement).toLocaleString("ro-RO")} / postare.`);
+  if (bestCategory && bestCategory.avgEngagement !== null) strengths.push(`În eșantionul analizat, „${bestCategory.category}” are cea mai mare medie de interacțiuni: ${Math.round(bestCategory.avgEngagement).toLocaleString("ro-RO")} / postare.`);
   if (postsWithEngagement && analyzedPosts.length) strengths.push(`${postsWithEngagement} din ${analyzedPosts.length} postări au primit cel puțin o interacțiune publică.`);
   if (conversationPosts) strengths.push(`${conversationPosts} postări au generat comentarii sau distribuiri — acestea sunt semnale mai puternice de conversație decât simpla reacție.`);
 
@@ -435,6 +435,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
     blockers.push(`„${weakestCategory.category}” este cu aproximativ ${pct}% sub media de interacțiuni a paginii în acest eșantion. Merită testat alt unghi, hook sau format înainte să continui aceeași abordare.`);
   }
   if (!conversationPosts && analyzedPosts.length) blockers.push("Postările analizate generează reacții, dar foarte puține comentarii sau distribuiri. Asta sugerează că merită testate CTA-uri care cer un răspuns sau o alegere.");
+  if (!engagementPosts.length && analyzedPosts.length) blockers.push("Meta nu a furnizat engagement pentru postările analizate. Nu îl tratăm ca 0.");
   if (analyzedPosts.length < 20) blockers.push("Eșantionul este mai mic de 20 de postări, deci concluziile despre ce prinde cel mai bine sunt încă orientative.");
 
   if (bestCategory) priorities.push(`Crește ponderea testată a „${bestCategory.category}”, dar verifică rezultatul pe încă 5–10 postări înainte de a trage concluzia finală.`);
