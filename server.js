@@ -426,6 +426,9 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
   const blockers = [];
   const priorities = [];
 
+  const dominantCategory = [...categoryStats].sort((a,b) => b.count - a.count)[0] || null;
+  const dominantShare = dominantCategory && analyzedPosts.length ? dominantCategory.count / analyzedPosts.length : 0;
+
   if (bestCategory && bestCategory.avgEngagement !== null) strengths.push(`În eșantionul analizat, „${bestCategory.category}” are cea mai mare medie de interacțiuni: ${Math.round(bestCategory.avgEngagement).toLocaleString("ro-RO")} / postare.`);
   if (postsWithEngagement && analyzedPosts.length) strengths.push(`${postsWithEngagement} din ${analyzedPosts.length} postări au primit cel puțin o interacțiune publică.`);
   if (conversationPosts) strengths.push(`${conversationPosts} postări au generat comentarii sau distribuiri — acestea sunt semnale mai puternice de conversație decât simpla reacție.`);
@@ -434,22 +437,33 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
     const pct = Math.round((1 - weakestCategory.avgEngagement / avgEngagement) * 100);
     blockers.push(`„${weakestCategory.category}” este cu aproximativ ${pct}% sub media de interacțiuni a paginii în acest eșantion. Merită testat alt unghi, hook sau format înainte să continui aceeași abordare.`);
   }
-  if (!conversationPosts && analyzedPosts.length) blockers.push("Postările analizate generează reacții, dar foarte puține comentarii sau distribuiri. Asta sugerează că merită testate CTA-uri care cer un răspuns sau o alegere.");
-  if (!engagementPosts.length && analyzedPosts.length) blockers.push("Meta nu a furnizat engagement pentru postările analizate. Nu îl tratăm ca 0.");
+  if (!conversationPosts && engagementPosts.length) blockers.push("Postările analizate generează puține comentarii sau distribuiri. Testează CTA-uri care cer un răspuns simplu: o alegere, o opinie sau o experiență.");
+  if (!engagementPosts.length && analyzedPosts.length) blockers.push("Meta nu a furnizat engagement pentru postările analizate. Nu îl tratăm ca 0, deci nu pretindem că știm ce tip de postare funcționează cel mai bine.");
+  if (dominantCategory && dominantShare >= 0.5) blockers.push(`„${dominantCategory.category}” reprezintă aproximativ ${Math.round(dominantShare * 100)}% din postările analizate. Asta poate limita ce putem învăța despre ce preferă publicul; merită testate intenționat și alte formate.`);
   if (analyzedPosts.length < 20) blockers.push("Eșantionul este mai mic de 20 de postări, deci concluziile despre ce prinde cel mai bine sunt încă orientative.");
 
-  if (bestCategory) priorities.push(`Crește ponderea testată a „${bestCategory.category}”, dar verifică rezultatul pe încă 5–10 postări înainte de a trage concluzia finală.`);
-  if (weakestCategory && weakestCategory.category !== bestCategory?.category) priorities.push(`Nu repeta mecanic formatul „${weakestCategory.category}”; schimbă hook-ul, structura sau CTA-ul și compară din nou rezultatele.`);
-  priorities.push("Construiește următoarele 7 zile în jurul unui singur obiectiv: vizibilitate, conversații sau comenzi — nu toate simultan.");
+  if (bestCategory) priorities.push(`Repetă „${bestCategory.category}” în 2–3 variante noi și schimbă hook-ul, nu doar imaginea. Compară rezultatele după fiecare postare.`);
+  else if (dominantCategory) priorities.push(`Ai multe postări de tip „${dominantCategory.category}”. În următoarele 7 zile testează intenționat cel puțin 2 formate diferite pentru a afla ce provoacă reacții.`);
+  if (!conversationPosts && engagementPosts.length) priorities.push("Adaugă 2 postări cu CTA conversațional: o întrebare concretă și o alegere între două variante.");
+  else if (weakestCategory && weakestCategory.category !== bestCategory?.category) priorities.push(`Schimbă abordarea pentru „${weakestCategory.category}”: alt hook, alt format sau alt CTA, apoi compară cu media paginii.`);
+  if (priorities.length < 3) priorities.push("Alege un singur obiectiv pentru următoarele 7 zile și urmărește același tip de rezultat de la o postare la alta.");
 
-  const plan = [
-    "Ziua 1: păstrează un format apropiat de categoria care a avut cea mai bună medie.",
-    "Ziua 2: testează un hook diferit pe aceeași temă.",
-    "Ziua 3: publică un Reel/video scurt și urmărește reacția.",
-    "Ziua 4: publică o postare care cere explicit o opinie sau alegere.",
-    "Ziua 5: prezintă produsul/oferta cu un singur CTA.",
-    "Ziua 6: repetă varianta care a generat cele mai multe comentarii sau distribuiri.",
-    "Ziua 7: compară rezultatele și decide ce merită repetat în săptămâna următoare."
+  const plan = bestCategory ? [
+    `Ziua 1: publică „${bestCategory.category}” într-o variantă nouă și păstrează un singur obiectiv.`,
+    "Ziua 2: publică un Reel/video scurt cu un hook clar în primele secunde.",
+    "Ziua 3: arată partea din spatele produsului, procesului sau serviciului.",
+    "Ziua 4: pune o întrebare la care se poate răspunde în câteva cuvinte.",
+    "Ziua 5: prezintă oferta/produsul, dar cu un singur CTA clar.",
+    "Ziua 6: repetă unghiul care a primit cele mai bune semnale și schimbă doar hook-ul.",
+    "Ziua 7: compară postările și notează ce merită repetat săptămâna următoare."
+  ] : [
+    "Ziua 1: publică o postare de prezentare cu un hook clar și un singur obiectiv.",
+    "Ziua 2: testează un Reel/video scurt.",
+    "Ziua 3: arată procesul sau partea din culise.",
+    "Ziua 4: publică o întrebare sau o alegere pentru comunitate.",
+    "Ziua 5: prezintă un produs/serviciu cu un singur CTA.",
+    "Ziua 6: repetă formatul care a primit cele mai bune semnale disponibile.",
+    "Ziua 7: compară rezultatele și păstrează ce merită testat din nou."
   ];
 
   const topPosts = [...engagementPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5);
