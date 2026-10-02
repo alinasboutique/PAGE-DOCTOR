@@ -9,7 +9,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 10000;
 const BASE_URL = (process.env.APP_BASE_URL || "").replace(/\/+$/, "");
-const META_APP_ID = process.env.META_APP_ID;
+const META_APP_ID
+const META_CONFIG_ID = process.env.META_CONFIG_ID;= 
 const META_APP_SECRET = process.env.META_APP_SECRET;
 const META_GRAPH_VERSION = process.env.META_GRAPH_VERSION || "v26.0";
 const STATE_SECRET = process.env.STATE_SECRET || crypto.randomBytes(32).toString("hex");
@@ -66,6 +67,7 @@ app.get("/auth/meta", (req, res) => {
   ].join(",");
   const url = new URL(`https://www.facebook.com/${META_GRAPH_VERSION}/dialog/oauth`);
   url.searchParams.set("client_id", META_APP_ID);
+  url.searchParams.set("config_id", META_CONFIG_ID);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
   url.searchParams.set("scope", scopes);
