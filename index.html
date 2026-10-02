@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Page Doctor</title>
+<style>
+:root{--bg:#fbf7f2;--card:#fff;--ink:#292525;--muted:#756d68;--accent:#d9777b;--accent2:#7d9b84;--line:#eadfd7;--soft:#f7eee9;--gold:#c8954a}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fbf7f2 0,#fff 100%);color:var(--ink);font-family:Inter,Arial,sans-serif}.wrap{max-width:980px;margin:auto;padding:42px 20px 70px}.hero{text-align:center;max-width:760px;margin:auto}.badge{display:inline-block;padding:7px 13px;border-radius:999px;background:#efe2db;color:#765b52;font-size:12px;font-weight:800;letter-spacing:.3px}.hero h1{font-size:44px;line-height:1.05;margin:16px 0 10px}.hero p{font-size:17px;line-height:1.65;color:var(--muted);margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px;margin-top:24px;box-shadow:0 12px 35px #0000000a}.card h2{margin:0 0 7px;font-size:23px}.sub{color:var(--muted);line-height:1.55;margin-top:0}.urlbox{display:flex;gap:10px;margin-top:22px}.urlbox input{flex:1}.input,select{width:100%;padding:14px 15px;border:1px solid #d8cdc5;border-radius:12px;font-size:15px;background:#fff;color:var(--ink);outline:none}.input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #d9777b18}.btn{border:0;border-radius:12px;padding:14px 20px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:15px;white-space:nowrap}.btn:hover{filter:brightness(.97)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.label{display:block;font-weight:800;margin:0 0 7px;font-size:14px}.error{color:#a4484d;background:#f8dfe0;border-radius:10px;padding:11px 13px;margin-top:12px;display:none}.success{background:#eef6ef;border:1px solid #d7e7da;color:#4d6d54;border-radius:14px;padding:14px 16px;margin-top:16px;line-height:1.5}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}.step{padding:15px;background:#faf7f4;border-radius:14px;border:1px solid var(--line)}.step b{display:block;margin-bottom:6px}.step span{font-size:13px;color:var(--muted);line-height:1.45}.notice{display:flex;gap:12px;align-items:flex-start;background:#fff8eb;border:1px solid #f0dfbc;border-radius:14px;padding:15px;margin-top:18px}.notice p{margin:0;color:#76634b;font-size:13px;line-height:1.5}.resulthead{display:flex;justify-content:space-between;gap:20px;align-items:center}.mini{font-size:12px;color:var(--muted)}.diagnostic{margin-top:18px}.priority{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#faf7f4;margin-top:10px}.hidden{display:none}
+@media(max-width:700px){.hero h1{font-size:34px}.urlbox,.grid,.steps{grid-template-columns:1fr;display:grid}.urlbox{display:flex;flex-direction:column}.resulthead{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<span class="badge">PAGE DOCTOR</span>
+<h1>🩺 Ce nu funcționează pe pagina ta?</h1>
+<p>Introdu linkul paginii tale și construim un diagnostic pe baza datelor reale disponibile prin Meta: vizibilitate, conținut, engagement, video și ce merită testat mai departe.</p>
+</header>
+
+<section class="card">
+<h2>🔗 Începe cu pagina ta</h2>
+<p class="sub">Linkul ne ajută să identificăm pagina. Pentru datele private de Insights, conectarea se face prin autentificarea oficială Meta.</p>
+<div class="urlbox">
+<input class="input" id="pageUrl" placeholder="https://www.facebook.com/numelepaginii" autocomplete="url">
+<button class="btn" onclick="startAnalysis()">🔎 Analizează pagina</button>
+</div>
+<div class="error" id="error"></div>
+<div class="grid">
+<div><label class="label">Ce vinzi / ce faci?</label><select id="niche"><option>Handmade</option><option>Wedding</option><option>Botez / Baby</option><option>Cadouri personalizate</option><option>Beauty</option><option>Food</option><option>Home decor</option><option>Servicii</option><option>Other</option></select></div>
+<div><label class="label">Ce vrei să îmbunătățești?</label><select id="goal"><option>Mai multe vizualizări și reach</option><option>Mai multe comentarii și conversații</option><option>Mai mulți urmăritori</option><option>Mai multe mesaje / comenzi</option><option>O combinație din toate</option></select></div>
+</div>
+<div class="notice"><div>🔐</div><div><strong>Conectare oficială Meta</strong><p>Nu cerem parola Facebook. Vei fi trimisă la Meta pentru autentificare și autorizare, apoi Page Doctor va folosi doar datele pentru care aplicația are permisiune.</p></div></div>
+<div class="steps">
+<div class="step"><b>1. Linkul paginii</b><span>Identificăm pagina și pregătim analiza.</span></div>
+<div class="step"><b>2. Conectezi Meta</b><span>Autorizezi accesul la paginile pe care le administrezi.</span></div>
+<div class="step"><b>3. Primești diagnosticul</b><span>Date reale + probleme prioritare + plan de acțiune.</span></div>
+</div>
+</section>
+
+<section id="result" class="card hidden">
+<div class="resulthead"><div><h2>🩺 Diagnosticul paginii</h2><div id="pageName" class="mini"></div></div><span class="badge">DATE REALE</span></div>
+<div id="summary" class="success"></div>
+<div class="grid" id="metrics"></div>
+<div class="diagnostic"><h3>🎯 Priorități</h3><div id="priorities"></div></div>
+</section>
+</div>
+<script>
+function startAnalysis(){
+ const input=document.getElementById('pageUrl'), url=input.value.trim(), error=document.getElementById('error');
+ error.style.display='none';
+ if(!url){error.textContent='Introdu linkul paginii de Facebook.';error.style.display='block';input.focus();return}
+ let parsed;try{parsed=new URL(url)}catch(e){error.textContent='Linkul nu pare valid. Exemplu: https://www.facebook.com/numelepaginii';error.style.display='block';return}
+ const host=parsed.hostname.toLowerCase().replace(/^www\./,'');
+ if(host!=='facebook.com'&&!host.endsWith('.facebook.com')){error.textContent='Te rog introdu un link de Facebook.';error.style.display='block';return}
+ sessionStorage.setItem('pageDoctorTarget',url);
+ window.location.href='/auth/meta?return='+encodeURIComponent('/');
+}
+function showResult(d){
+ document.getElementById('result').classList.remove('hidden');
+ document.getElementById('pageName').textContent=d.page?.name||'Pagina conectată';
+ document.getElementById('summary').innerHTML=d.diagnostic?.dataAvailable
+ ? '<strong>✓ Am primit date reale de la Meta.</strong><br>Putem începe analiza pe baza datelor disponibile.'
+ : '<strong>Conexiunea a reușit, dar Insights nu sunt încă disponibile.</strong><br>Verifică permisiunile aprobate și cerințele Meta.';
+ const m=document.getElementById('metrics');m.innerHTML='';
+ (d.insights||[]).forEach(x=>{const div=document.createElement('div');div.className='step';div.innerHTML='<b>'+x.metric+'</b><span>'+(x.unavailable?'Indisponibil: '+x.error:('Date primite: '+(x.data?.length||0)+' puncte'))+'</span>';m.appendChild(div)});
+ const p=document.getElementById('priorities');p.innerHTML='';
+ (d.diagnostic?.priorities||[]).forEach(x=>{const div=document.createElement('div');div.className='priority';div.textContent='• '+x;p.appendChild(div)});
+ document.getElementById('result').scrollIntoView({behavior:'smooth'});
+}
+const stored=sessionStorage.getItem('pageDoctorResult');
+if(stored){try{showResult(JSON.parse(stored));sessionStorage.removeItem('pageDoctorResult')}catch(e){}}
+</script>
+</body></html>
