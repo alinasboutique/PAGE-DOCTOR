@@ -265,10 +265,27 @@ function getInsightTotal(insight) {
 }
 
 function getPostEngagement(post) {
-  const reactions = Number(post?.reactions?.summary?.total_count || 0);
-  const comments = Number(post?.comments?.summary?.total_count || 0);
-  const shares = Number(post?.shares?.count || 0);
-  return { reactions, comments, shares, total: reactions + comments + shares };
+  const hasLikes = typeof post?.likes?.summary?.total_count === "number";
+  const hasReactions = typeof post?.reactions?.summary?.total_count === "number";
+  const hasComments = typeof post?.comments?.summary?.total_count === "number";
+  const hasShares = typeof post?.shares?.count === "number";
+
+  const reactions = hasReactions
+    ? post.reactions.summary.total_count
+    : hasLikes ? post.likes.summary.total_count : null;
+  const comments = hasComments ? post.comments.summary.total_count : null;
+  const shares = hasShares ? post.shares.count : null;
+  const available = [reactions, comments, shares].some(v => v !== null);
+
+  return {
+    reactions,
+    comments,
+    shares,
+    total: available
+      ? [reactions, comments, shares].filter(v => v !== null).reduce((sum, v) => sum + v, 0)
+      : null,
+    available
+  };
 }
 
 function classifyPost(post) {
