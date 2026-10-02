@@ -5,8 +5,8 @@
 <title>Page Doctor</title>
 <style>
 :root{--bg:#fbf7f2;--card:#fff;--ink:#292525;--muted:#756d68;--accent:#d9777b;--accent2:#7d9b84;--line:#eadfd7;--soft:#f7eee9;--gold:#c8954a}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fbf7f2 0,#fff 100%);color:var(--ink);font-family:Inter,Arial,sans-serif}.wrap{max-width:980px;margin:auto;padding:42px 20px 70px}.hero{text-align:center;max-width:760px;margin:auto}.badge{display:inline-block;padding:7px 13px;border-radius:999px;background:#efe2db;color:#765b52;font-size:12px;font-weight:800;letter-spacing:.3px}.hero h1{font-size:44px;line-height:1.05;margin:16px 0 10px}.hero p{font-size:17px;line-height:1.65;color:var(--muted);margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px;margin-top:24px;box-shadow:0 12px 35px #0000000a}.card h2{margin:0 0 7px;font-size:23px}.sub{color:var(--muted);line-height:1.55;margin-top:0}.urlbox{display:flex;gap:10px;margin-top:22px}.urlbox input{flex:1}.input,select{width:100%;padding:14px 15px;border:1px solid #d8cdc5;border-radius:12px;font-size:15px;background:#fff;color:var(--ink);outline:none}.input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #d9777b18}.btn{border:0;border-radius:12px;padding:14px 20px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:15px;white-space:nowrap}.btn:hover{filter:brightness(.97)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.label{display:block;font-weight:800;margin:0 0 7px;font-size:14px}.error{color:#a4484d;background:#f8dfe0;border-radius:10px;padding:11px 13px;margin-top:12px;display:none}.success{background:#eef6ef;border:1px solid #d7e7da;color:#4d6d54;border-radius:14px;padding:14px 16px;margin-top:16px;line-height:1.5}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}.step{padding:15px;background:#faf7f4;border-radius:14px;border:1px solid var(--line)}.step b{display:block;margin-bottom:6px}.step span{font-size:13px;color:var(--muted);line-height:1.45}.notice{display:flex;gap:12px;align-items:flex-start;background:#fff8eb;border:1px solid #f0dfbc;border-radius:14px;padding:15px;margin-top:18px}.notice p{margin:0;color:#76634b;font-size:13px;line-height:1.5}.resulthead{display:flex;justify-content:space-between;gap:20px;align-items:center}.mini{font-size:12px;color:var(--muted)}.diagnostic{margin-top:18px}.priority{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#faf7f4;margin-top:10px}.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}.score-card{padding:15px;border:1px solid var(--line);border-radius:14px;background:#faf7f4;text-align:center}.score-number{font-size:30px;font-weight:900}.score-label{font-weight:800;font-size:13px;margin-top:4px}.score-reason{font-size:11px;color:var(--muted);line-height:1.35;margin-top:7px}.overall-score{font-size:40px;font-weight:900;margin:8px 0}.content-row{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#faf7f4;margin-top:10px;display:flex;justify-content:space-between;gap:15px}.content-row strong{font-size:15px}.content-row span{color:var(--muted);font-size:13px}.hidden{display:none}
-@media(max-width:700px){.hero h1{font-size:34px}.urlbox,.grid,.steps,.score-grid{grid-template-columns:1fr;display:grid}.urlbox{display:flex;flex-direction:column}.resulthead{flex-direction:column;align-items:flex-start}}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fbf7f2 0,#fff 100%);color:var(--ink);font-family:Inter,Arial,sans-serif}.wrap{max-width:980px;margin:auto;padding:42px 20px 70px}.hero{text-align:center;max-width:760px;margin:auto}.badge{display:inline-block;padding:7px 13px;border-radius:999px;background:#efe2db;color:#765b52;font-size:12px;font-weight:800;letter-spacing:.3px}.hero h1{font-size:44px;line-height:1.05;margin:16px 0 10px}.hero p{font-size:17px;line-height:1.65;color:var(--muted);margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px;margin-top:24px;box-shadow:0 12px 35px #0000000a}.card h2{margin:0 0 7px;font-size:23px}.sub{color:var(--muted);line-height:1.55;margin-top:0}.urlbox{display:flex;gap:10px;margin-top:22px}.urlbox input{flex:1}.input,select{width:100%;padding:14px 15px;border:1px solid #d8cdc5;border-radius:12px;font-size:15px;background:#fff;color:var(--ink);outline:none}.input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #d9777b18}.btn{border:0;border-radius:12px;padding:14px 20px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:15px;white-space:nowrap}.btn:hover{filter:brightness(.97)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.label{display:block;font-weight:800;margin:0 0 7px;font-size:14px}.error{color:#a4484d;background:#f8dfe0;border-radius:10px;padding:11px 13px;margin-top:12px;display:none}.success{background:#eef6ef;border:1px solid #d7e7da;color:#4d6d54;border-radius:14px;padding:14px 16px;margin-top:16px;line-height:1.5}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}.step{padding:15px;background:#faf7f4;border-radius:14px;border:1px solid var(--line)}.step b{display:block;margin-bottom:6px}.step span{font-size:13px;color:var(--muted);line-height:1.45}.notice{display:flex;gap:12px;align-items:flex-start;background:#fff8eb;border:1px solid #f0dfbc;border-radius:14px;padding:15px;margin-top:18px}.notice p{margin:0;color:#76634b;font-size:13px;line-height:1.5}.resulthead{display:flex;justify-content:space-between;gap:20px;align-items:center}.mini{font-size:12px;color:var(--muted)}.diagnostic{margin-top:30px}.summary{margin-top:18px;padding:20px 22px;border:1px solid #eadfd7;border-radius:18px;background:linear-gradient(135deg,#fff8f4,#f8f2ed);font-size:16px;line-height:1.65}.summary strong{font-size:20px;display:block;margin-bottom:5px}.section-title-row{display:flex;justify-content:space-between}.section-help{color:var(--muted);font-size:13px;line-height:1.5;margin:4px 0 12px}.priority{padding:17px 18px;border:1px solid var(--line);border-radius:16px;background:#faf7f4;margin-top:10px;line-height:1.55}.priority strong{display:block;margin-bottom:5px}.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}.score-card{padding:16px 12px;border:1px solid var(--line);border-radius:16px;background:#faf7f4;text-align:center}.score-number{font-size:28px;font-weight:900}.score-label{font-weight:800;font-size:13px;margin-top:4px}.score-reason{font-size:11px;color:var(--muted);line-height:1.35;margin-top:7px}.overall-score{font-size:46px;font-weight:900;margin:4px 0}.content-row{padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:#faf7f4;margin-top:10px;display:flex;justify-content:space-between;gap:15px}.content-row strong{font-size:15px}.content-row span{color:var(--muted);font-size:13px}.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.plan-day{padding:16px;border:1px solid var(--line);border-radius:16px;background:#fff}.plan-day b{display:block;margin-bottom:6px}.plan-day span{font-size:14px;line-height:1.5;color:#4d4642}..metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.metric-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:#faf7f4}.metric-card b{display:block;margin-bottom:5px}.metric-card span{font-size:13px;color:var(--muted);line-height:1.45}.data-details{border:1px solid var(--line);border-radius:16px;padding:16px;background:#faf7f4}.data-details summary{font-weight:800;cursor:pointer}.hidden{display:none}
+@media(max-width:700px){.hero h1{font-size:34px}.urlbox,.grid,.steps,.score-grid,.plan-grid,.metric-grid{grid-template-columns:1fr;display:grid}.urlbox{display:flex;flex-direction:column}.resulthead{flex-direction:column;align-items:flex-start}}
 </style>
 </head>
 <body>
@@ -38,22 +38,61 @@
 </section>
 
 <section id="result" class="card hidden">
-<div class="resulthead"><div><h2>🩺 Diagnosticul paginii</h2><div id="pageName" class="mini"></div></div><span class="badge">DATE REALE</span></div>
-<div id="summary" class="success"></div>
-<div class="grid" id="metrics"></div>
+<div class="resulthead"><div><h2>🩺 Diagnosticul paginii</h2><div id="pageName" class="mini"></div></div><span class="badge">ANALIZĂ PERSONALIZATĂ</span></div>
+
+<div id="summary" class="summary"></div>
+
 <div class="diagnostic">
-<h3>🩺 Scorul paginii</h3>
-<div id="overallScore" class="overall-score"></div>
-<div id="scoreGrid" class="score-grid"></div>
-<div id="scoreNote" class="sub"></div>
+  <div class="section-title-row"><div><h3>📊 Cum arată pagina ta acum</h3><p class="section-help">Scorurile nu sunt un verdict. Ele arată unde merită să te uiți prima dată.</p></div></div>
+  <div id="overallScore" class="overall-score"></div>
+  <div id="scoreGrid" class="score-grid"></div>
+  <div id="scoreNote" class="sub"></div>
 </div>
-<div class="diagnostic"><h3>📊 Ce funcționează</h3><div id="strengths"></div></div>
-<div class="diagnostic"><h3>🧠 Ce tip de conținut prinde cel mai bine</h3><div id="contentTypes"></div></div>
-<div class="diagnostic"><h3>⚠️ Ce te poate ține pe loc</h3><div id="blockers"></div></div>
-<div class="diagnostic"><h3>🎯 Primele 3 priorități</h3><div id="priorities"></div></div>
-<div class="diagnostic"><h3>🏆 Postările cu cele mai multe interacțiuni</h3><div id="topPosts"></div></div>
-<div class="diagnostic"><h3>📅 Planul tău pentru următoarele 7 zile</h3><div id="plan"></div></div>
-<div class="diagnostic"><h3>🔎 Ce am analizat</h3><div id="analysisNote" class="sub"></div></div>
+
+<div class="diagnostic">
+  <h3>💡 Ce înseamnă asta pentru tine</h3>
+  <div id="interpretation"></div>
+</div>
+
+<div class="diagnostic">
+  <h3>🟢 Ce funcționează deja</h3>
+  <div id="strengths"></div>
+</div>
+
+<div class="diagnostic">
+  <h3>🔴 Unde pierzi oportunități</h3>
+  <div id="blockers"></div>
+</div>
+
+<div class="diagnostic">
+  <h3>🧠 Ce tip de conținut merită repetat</h3>
+  <p class="section-help">Comparăm doar tipurile pentru care avem suficiente date reale de engagement.</p>
+  <div id="contentTypes"></div>
+</div>
+
+<div class="diagnostic">
+  <h3>🎯 Ce să schimbi acum</h3>
+  <div id="priorities"></div>
+</div>
+
+<div class="diagnostic">
+  <h3>🏆 Postările care au obținut cele mai multe interacțiuni</h3>
+  <div id="topPosts"></div>
+</div>
+
+<div class="diagnostic">
+  <h3>📅 Planul tău pentru următoarele 7 zile</h3>
+  <p class="section-help">Nu încercăm să reparăm totul într-o săptămână. Fiecare zi are un scop clar.</p>
+  <div id="plan" class="plan-grid"></div>
+</div>
+
+<div class="diagnostic">
+  <details class="data-details">
+    <summary>🔎 Vezi ce am analizat</summary>
+    <div id="analysisNote" class="sub"></div>
+    <div id="metrics" class="metric-grid"></div>
+  </details>
+</div>
 </section>
 </div>
 <script>
@@ -87,53 +126,79 @@ function addItems(id,items,empty){
  if(!items||!items.length){el.innerHTML='<div class="priority">'+empty+'</div>';return}
  items.forEach(x=>{const div=document.createElement('div');div.className='priority';div.textContent='• '+x;el.appendChild(div)});
 }
+function escapeText(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function scoreMeaning(s){
+ const n=s.score;
+ const map={
+  "Vizibilitate": n>=7?"Pagina are un semnal bun de vizibilitate în datele disponibile. Merită să păstrezi formatele care ajung la oameni și să lucrezi la ce se întâmplă după vizualizare.":"Vizibilitatea este zona care merită testată mai atent.",
+  "Reacția publicului": n>=7?"Publicul reacționează bine la conținutul analizat. Caută ce au în comun postările cu rezultate bune.":"Oamenii pot vedea conținutul fără să simtă suficient motiv să reacționeze. Testează întrebări, opinii, alegeri și CTA-uri clare.",
+  "Consecvență": n>=7?"Ai o prezență relativ constantă în perioada analizată.":"Postările sunt distribuite pe prea puține săptămâni sau neuniform. Un ritm realist și repetabil este mai util decât postări multe urmate de pauze.",
+  "Conversație": n>=7?"Există semnale bune de comentarii sau distribuiri. Repetă temele care provoacă răspunsuri.":"Conținutul nu generează suficientă conversație în datele disponibile. Creează postări la care oamenii pot răspunde ușor.",
+  "Diversitatea conținutului": n>=7?"Folosești mai multe tipuri de conținut.":"Conținutul este concentrat în puține tipuri. Testează poveste, educațional, conversație, produs și video, apoi compară rezultatele."
+ };
+ return map[s.label]||s.reason;
+}
+function addItems(id,items,empty){
+ const el=document.getElementById(id);el.innerHTML='';
+ if(!items||!items.length){el.innerHTML='<div class="priority">'+empty+'</div>';return}
+ items.forEach(x=>{const div=document.createElement('div');div.className='priority';div.textContent='• '+x;el.appendChild(div)});
+}
 function showResult(d){
  document.getElementById('result').classList.remove('hidden');
  document.getElementById('pageName').textContent=d.page?.name||'Pagina conectată';
+ const diag=d.diagnostic||{};
+ const scores=diag.scores||[];
  const overall=document.getElementById('overallScore');
- overall.textContent=d.diagnostic?.overallScore ? d.diagnostic.overallScore.toFixed(1).replace('.',',')+'/10' : 'Scor indisponibil';
- const sg=document.getElementById('scoreGrid'); sg.innerHTML='';
- (d.diagnostic?.scores||[]).forEach(s=>{
+ overall.textContent=diag.overallScore!==null&&diag.overallScore!==undefined?Number(diag.overallScore).toLocaleString('ro-RO',{minimumFractionDigits:1,maximumFractionDigits:1})+'/10':'Scor indisponibil';
+
+ const sg=document.getElementById('scoreGrid');sg.innerHTML='';
+ scores.forEach(s=>{
    const div=document.createElement('div');div.className='score-card';
-   div.innerHTML='<div class="score-number">'+Number(s.score).toLocaleString('ro-RO')+'/10</div><div class="score-label">'+s.label+'</div><div class="score-reason">'+s.reason+'</div>';
+   div.innerHTML='<div class="score-number">'+(s.score===null?'—':Number(s.score).toLocaleString('ro-RO'))+'/10</div><div class="score-label">'+escapeText(s.label)+'</div><div class="score-reason">'+escapeText(s.reason)+'</div>';
    sg.appendChild(div);
  });
- document.getElementById('scoreNote').textContent='Scorurile sunt calculate din datele disponibile ale paginii și sunt orientative. Nu folosim un scor dacă Meta nu oferă baza necesară pentru calcul.';
- const ct=document.getElementById('contentTypes'); ct.innerHTML='';
- const cats=d.diagnostic?.contentCategories||[];
- if(!cats.length) ct.innerHTML='<div class="priority">Nu avem suficiente date pentru a identifica tipurile de conținut.</div>';
- else cats.forEach(c=>{
+ document.getElementById('scoreNote').textContent='Un scor apare doar când există suficiente date pentru calcul. Datele lipsă nu sunt transformate în zero.';
+ 
+ const summary=document.getElementById('summary');
+ if(diag.bestCategory){
+   summary.innerHTML='<strong>🔎 Prima concluzie</strong>În datele disponibile, <b>'+escapeText(diag.bestCategory.category)+'</b> este tipul de conținut cu cea mai mare medie de interacțiuni. Mai jos îți arăt ce să faci cu această informație.';
+ }else if(diag.blockers?.length){
+   summary.innerHTML='<strong>🔎 Prima concluzie</strong>'+escapeText(diag.blockers[0]);
+ }else{
+   summary.innerHTML='<strong>🔎 Prima concluzie</strong>Avem nevoie de mai multe semnale de engagement pentru a identifica exact ce conținut funcționează cel mai bine.';
+ }
+
+ const interpretation=document.getElementById('interpretation');interpretation.innerHTML='';
+ scores.forEach(s=>{const div=document.createElement('div');div.className='priority';div.innerHTML='<strong>'+escapeText(s.label)+' — '+(s.score===null?'date insuficiente':Number(s.score).toLocaleString('ro-RO')+'/10')+'</strong><span>'+escapeText(scoreMeaning(s))+'</span>';interpretation.appendChild(div)});
+ if(!scores.length) interpretation.innerHTML='<div class="priority">Nu există încă suficiente date pentru o interpretare a scorurilor.</div>';
+
+ const ct=document.getElementById('contentTypes');ct.innerHTML='';
+ const cats=diag.contentCategories||[];
+ const eligible=cats.filter(c=>c.avgEngagement!==null&&c.engagementCount>=2);
+ if(!eligible.length) ct.innerHTML='<div class="priority"><strong>Nu pot face încă această comparație.</strong> Meta nu a furnizat suficiente date publice de engagement pentru cel puțin două postări dintr-un tip de conținut. Nu ghicim și nu tratăm lipsa datelor ca 0.</div>';
+ else eligible.forEach((c,i)=>{
    const div=document.createElement('div');div.className='content-row';
-   const mark=c.category===d.diagnostic?.bestCategory?.category?' ⭐':''; 
-   const avg=c.avgEngagement===null?'Indisponibil':Math.round(c.avgEngagement).toLocaleString('ro-RO');
-   div.innerHTML='<div><strong>'+c.category+mark+'</strong><br><span>'+c.count+' postări analizate</span></div><div><strong>'+avg+'</strong><br><span>interacțiuni medii/postare</span></div>';
+   const mark=i===0?' ⭐':'';
+   div.innerHTML='<div><strong>'+escapeText(c.category)+mark+'</strong><br><span>'+c.count+' postări analizate · '+c.engagementCount+' cu engagement disponibil</span></div><div><strong>'+Math.round(c.avgEngagement).toLocaleString('ro-RO')+'</strong><br><span>interacțiuni medii/postare</span></div>';
    ct.appendChild(div);
  });
- const available=(d.insights||[]).filter(x=>!x.unavailable);
- const unavailable=(d.insights||[]).filter(x=>x.unavailable);
- document.getElementById('summary').innerHTML=d.diagnostic?.dataAvailable
- ? '<strong>✓ Analiza a primit date reale de la Meta.</strong><br>Am verificat o perioadă de până la 28 de zile și postările recente disponibile.'
- : '<strong>Conectarea a reușit, dar Meta nu oferă încă suficiente date.</strong><br>Nu inventăm concluzii atunci când datele lipsesc.';
+
+ addItems('strengths',diag.strengths,'Nu avem încă suficiente date pentru a identifica un punct forte clar.');
+ addItems('blockers',diag.blockers,'Nu a fost identificat un blocaj clar din datele disponibile.');
+ addItems('priorities',diag.priorities,'Mai avem nevoie de date pentru priorități.');
+
+ const top=document.getElementById('topPosts');top.innerHTML='';
+ const tops=diag.topPosts||[];
+ if(!tops.length) top.innerHTML='<div class="priority"><strong>Încă nu putem compara postările.</strong> Engagement-ul public necesar nu este disponibil pentru suficiente postări.</div>';
+ else tops.forEach((p,n)=>{const div=document.createElement('div');div.className='priority';const text=(p.message||'Postare fără text').replace(/\s+/g,' ').trim();div.innerHTML='<strong>#'+(n+1)+' · '+Number(p.engagement?.total||0).toLocaleString('ro-RO')+' interacțiuni · '+escapeText(p.category||'Conținut')+'</strong><span>'+escapeText(text)+'</span>';if(p.permalink_url)div.innerHTML+='<br><a href="'+escapeText(p.permalink_url)+'" target="_blank" rel="noopener" style="color:#b85d63;font-weight:700">Vezi postarea →</a>';top.appendChild(div)});
+
+ const plan=document.getElementById('plan');plan.innerHTML='';
+ (diag.plan||[]).forEach((p,i)=>{const div=document.createElement('div');div.className='plan-day';const parts=String(p).split(':');div.innerHTML='<b>'+escapeText(parts[0]||('Ziua '+(i+1)))+'</b><span>'+escapeText(parts.slice(1).join(':').trim()||p)+'</span>';plan.appendChild(div)});
+ if(!diag.plan?.length)plan.innerHTML='<div class="priority">Planul va apărea după ce avem suficiente date.</div>';
+
+ document.getElementById('analysisNote').textContent='Perioadă analizată: până la '+(diag.windowDays||28)+' zile · '+(diag.postsAnalyzed||0)+' postări recente. '+((d.insights||[]).filter(x=>x.unavailable).length?'Unii indicatori Meta au fost indisponibili și nu au fost folosiți în concluziile care depind de ei.':'Indicatorii disponibili au fost folosiți în calcul.');
  const m=document.getElementById('metrics');m.innerHTML='';
- (d.insights||[]).forEach(x=>{
-   const div=document.createElement('div');div.className='step';
-   div.innerHTML='<b>'+metricLabel(x.metric)+'</b><span>'+metricValue(x)+(x.unavailable?'':'<br><small>Totalul valorilor zilnice primite</small>')+'</span>';
-   m.appendChild(div);
- });
- addItems('strengths',d.diagnostic?.strengths,'Nu avem încă suficiente date pentru a identifica un punct forte clar.');
- addItems('blockers',d.diagnostic?.blockers,'Nu a fost identificat un blocaj clar din datele disponibile.');
- addItems('priorities',d.diagnostic?.priorities,'Mai avem nevoie de date pentru priorități.');
- addItems('plan',d.diagnostic?.plan,'Planul va apărea după analiză.');
- const top=document.getElementById('topPosts'); top.innerHTML='';
- const tops=d.diagnostic?.topPosts||[];
- if(!tops.length) top.innerHTML='<div class="priority">Nu am primit suficiente date publice de engagement pentru a compara postările.</div>';
- else tops.forEach((p,n)=>{
-   const div=document.createElement('div');div.className='priority';
-   const text=(p.message||'Postare fără text').replace(/\s+/g,' ').trim();
-   div.innerHTML='<strong>#'+(n+1)+' — '+Number(p.engagement?.total||0).toLocaleString('ro-RO')+' interacțiuni</strong><br><span>'+text.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</span>';
-   top.appendChild(div);
- });
- document.getElementById('analysisNote').textContent='Am analizat până la 28 de zile de Insights disponibile și '+(d.diagnostic?.postsAnalyzed||0)+' postări recente. '+(unavailable.length?' '+unavailable.length+' indicatori Meta nu au fost disponibili și nu sunt folosiți în concluzii.':'');
+ (d.insights||[]).forEach(x=>{const div=document.createElement('div');div.className='metric-card';div.innerHTML='<b>'+escapeText(metricLabel(x.metric))+'</b><span>'+escapeText(metricValue(x))+'</span>';m.appendChild(div)});
  document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
 const stored=sessionStorage.getItem('pageDoctorResult');
