@@ -336,7 +336,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
   })).size;
   const consistencyScore = Math.min(10, Math.max(1, activeWeeks * 2.5));
 
-  const engagementPerFollower = followers && analyzedPosts.length ? (avgEngagement / followers) * 100;
+  const engagementPerFollower = followers && analyzedPosts.length ? (avgEngagement / followers) * 100 : null;
   const engagementScore = followers
     ? score10(engagementPerFollower, [
         {max:0.05,score:3},{max:0.10,score:4},{max:0.20,score:5},{max:0.40,score:6},
