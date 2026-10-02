@@ -227,16 +227,28 @@ app.post("/api/analyze", async (req, res) => {
       }
     }
 
-    // Luăm postările recente împreună cu semnalele publice de engagement.
+    // Luăm postările recente. Meta poate returna feed-ul cu succes chiar dacă
+    // nu include toate câmpurile de engagement, așa că îmbogățim separat fiecare
+    // postare atunci când engagement-ul nu este deja disponibil.
+    const feedFields = "id,message,created_time,permalink_url,type,status_type,reactions.limit(0).summary(true),comments.limit(0).summary(true),shares";
     try {
       const feed = await metaGet(`${page.id}/feed`, {
         access_token: token,
-        fields: "id,message,created_time,permalink_url,type,status_type,likes.limit(0).summary(true),comments.limit(0).summary(true),shares",
+        fields: feedFields,
         limit: "50"
       });
       result.posts = feed.data || [];
+      result.posts_engagement_source = "feed";
+      console.log("FEED OK:", {
+        count: result.posts.length,
+        withReactions: result.posts.filter(p => typeof p?.reactions?.summary?.total_count === "number").length,
+        withComments: result.posts.filter(p => typeof p?.comments?.summary?.total_count === "number").length,
+        withShares: result.posts.filter(p => typeof p?.shares?.count === "number").length
+      });
     } catch (e) {
       result.posts_error = e.message;
+      console.error("FEED WITH ENGAGEMENT FAILED:", e.meta || e);
+
       try {
         const feed = await metaGet(`${page.id}/feed`, {
           access_token: token,
@@ -245,35 +257,56 @@ app.post("/api/analyze", async (req, res) => {
         });
         result.posts = feed.data || [];
         result.posts_engagement_source = "per-post";
-
-        for (const post of result.posts) {
-          const engagement = { reactions: null, comments: null, shares: null, total: null, available: false };
-          try {
-            const d = await metaGet(post.id, {
-              access_token: token,
-              fields: "likes.limit(0).summary(true),comments.limit(0).summary(true),shares"
-            });
-            const likes = d?.likes?.summary?.total_count;
-            const comments = d?.comments?.summary?.total_count;
-            const shares = d?.shares?.count;
-            engagement.reactions = typeof likes === "number" ? likes : null;
-            engagement.comments = typeof comments === "number" ? comments : null;
-            engagement.shares = typeof shares === "number" ? shares : null;
-          } catch (postError) {
-            console.error("POST ENGAGEMENT FAILED:", post.id, postError.meta || postError);
-          }
-          engagement.available = [engagement.reactions, engagement.comments, engagement.shares].some(v => v !== null);
-          if (engagement.available) {
-            engagement.total = [engagement.reactions, engagement.comments, engagement.shares]
-              .filter(v => typeof v === "number")
-              .reduce((sum, v) => sum + v, 0);
-          }
-          post.engagement = engagement;
-        }
       } catch (fallbackError) {
         result.posts_error = fallbackError.message;
+        console.error("FEED FALLBACK FAILED:", fallbackError.meta || fallbackError);
       }
     }
+
+    // Enrichment is intentional even when the main /feed request succeeded:
+    // this is the path that makes the "top post" and content-type comparison real.
+    let enrichedCount = 0;
+    for (const post of result.posts) {
+      const current = getPostEngagement(post);
+      if (current.available) {
+        post.engagement = current;
+        continue;
+      }
+
+      try {
+        const d = await metaGet(post.id, {
+          access_token: token,
+          fields: "reactions.limit(0).summary(true),comments.limit(0).summary(true),shares"
+        });
+        const reactions = d?.reactions?.summary?.total_count;
+        const comments = d?.comments?.summary?.total_count;
+        const shares = d?.shares?.count;
+        const engagement = {
+          reactions: typeof reactions === "number" ? reactions : null,
+          comments: typeof comments === "number" ? comments : null,
+          shares: typeof shares === "number" ? shares : null,
+          total: null,
+          available: false
+        };
+        engagement.available = [engagement.reactions, engagement.comments, engagement.shares].some(v => v !== null);
+        if (engagement.available) {
+          engagement.total = [engagement.reactions, engagement.comments, engagement.shares]
+            .filter(v => typeof v === "number")
+            .reduce((sum, v) => sum + v, 0);
+          enrichedCount++;
+        }
+        post.engagement = engagement;
+      } catch (postError) {
+        console.error("POST ENGAGEMENT FAILED:", post.id, postError.meta || postError);
+        post.engagement = { reactions: null, comments: null, shares: null, total: null, available: false };
+      }
+    }
+
+    console.log("POST ENGAGEMENT SUMMARY:", {
+      posts: result.posts.length,
+      enriched: enrichedCount,
+      available: result.posts.filter(p => p?.engagement?.available).length
+    });
 
     result.diagnostic = buildDiagnostic(result.insights, result.posts, result.page);
     res.json(result);
