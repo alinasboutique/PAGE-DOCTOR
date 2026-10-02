@@ -317,10 +317,14 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
     engagement: getPostEngagement(p)
   }));
 
-  const totalEngagement = analyzedPosts.reduce((sum, p) => sum + p.engagement.total, 0);
-  const avgEngagement = analyzedPosts.length ? totalEngagement / analyzedPosts.length : 0;
-  const postsWithEngagement = analyzedPosts.filter(p => p.engagement.total > 0).length;
-  const conversationPosts = analyzedPosts.filter(p => p.engagement.comments > 0 || p.engagement.shares > 0).length;
+  const engagementPosts = analyzedPosts.filter(p => p.engagement.available && p.engagement.total !== null);
+  const totalEngagement = engagementPosts.reduce((sum, p) => sum + p.engagement.total, 0);
+  const avgEngagement = engagementPosts.length ? totalEngagement / engagementPosts.length : null;
+  const postsWithEngagement = engagementPosts.filter(p => p.engagement.total > 0).length;
+  const conversationPosts = engagementPosts.filter(p =>
+    (p.engagement.comments !== null && p.engagement.comments > 0) ||
+    (p.engagement.shares !== null && p.engagement.shares > 0)
+  ).length;
 
   const byCategory = {};
   analyzedPosts.forEach(p => {
