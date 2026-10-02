@@ -227,7 +227,8 @@ app.post("/api/analyze", async (req, res) => {
       }
     }
 
-    // Luăm postările recente. Meta poate returna feed-ul cu succes chiar dacă
+    // Luăm postările publicate de pagină; folosim /posts deoarece /feed poate declanșa câmpuri Meta depreciate.
+    // Meta poate returna datele cu succes chiar dacă
     // nu include toate câmpurile de engagement, așa că îmbogățim separat fiecare
     // postare atunci când engagement-ul nu este deja disponibil.
     const feedFields = "id,message,created_time,permalink_url";
