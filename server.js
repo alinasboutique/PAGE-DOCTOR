@@ -120,7 +120,7 @@ try {
 
 const me = await metaGet("/me", {
   access_token: activeToken,
-  fields: "id,name"
+ fields: "id,name,access_token,tasks"
 });
 
 console.log("META USER:", {
