@@ -201,11 +201,12 @@ app.post("/api/analyze", async (req, res) => {
       tasks: page.tasks || [],
       insights: [],
       posts: [],
-      diagnostic: buildDiagnostic([])
+      diagnostic: {}
     };
 
-    // Keep the first real integration conservative: request a small set of
-    // current Page Insights metrics and gracefully keep any unavailable metric out.
+    // Analizăm o fereastră reală de 28 de zile, nu doar ultimul punct disponibil.
+    const until = Math.floor(Date.now() / 1000);
+    const since = until - 28 * 24 * 60 * 60;
     const metricCandidates = [
       "page_total_media_view_unique",
       "page_media_view",
@@ -216,7 +217,9 @@ app.post("/api/analyze", async (req, res) => {
       try {
         const data = await metaGet(`${page.id}/insights/${metric}`, {
           access_token: token,
-          period: "day"
+          period: "day",
+          since: String(since),
+          until: String(until)
         });
         result.insights.push({ metric, data: data.data || [] });
       } catch (e) {
@@ -224,15 +227,26 @@ app.post("/api/analyze", async (req, res) => {
       }
     }
 
+    // Luăm postările recente împreună cu semnalele publice de engagement.
     try {
       const feed = await metaGet(`${page.id}/feed`, {
         access_token: token,
-        fields: "id,message,created_time,permalink_url",
-        limit: "25"
+        fields: "id,message,created_time,permalink_url,reactions.summary(true),comments.summary(true),shares",
+        limit: "50"
       });
       result.posts = feed.data || [];
     } catch (e) {
       result.posts_error = e.message;
+      try {
+        const feed = await metaGet(`${page.id}/feed`, {
+          access_token: token,
+          fields: "id,message,created_time,permalink_url",
+          limit: "50"
+        });
+        result.posts = feed.data || [];
+      } catch (fallbackError) {
+        result.posts_error = fallbackError.message;
+      }
     }
 
     result.diagnostic = buildDiagnostic(result.insights, result.posts);
@@ -243,24 +257,77 @@ app.post("/api/analyze", async (req, res) => {
   }
 });
 
+function getInsightTotal(insight) {
+  if (!insight || insight.unavailable) return null;
+  const values = (insight.data || []).flatMap(x => Array.isArray(x.values) ? x.values : []);
+  const nums = values.map(x => typeof x.value === "number" ? x.value : null).filter(x => x !== null);
+  return nums.length ? nums.reduce((a, b) => a + b, 0) : null;
+}
+
+function getPostEngagement(post) {
+  const reactions = Number(post?.reactions?.summary?.total_count || 0);
+  const comments = Number(post?.comments?.summary?.total_count || 0);
+  const shares = Number(post?.shares?.count || 0);
+  return { reactions, comments, shares, total: reactions + comments + shares };
+}
+
 function buildDiagnostic(insights, posts = []) {
   const available = insights.filter(x => !x.unavailable);
   const hasData = available.some(x => Array.isArray(x.data) && x.data.length);
+  const analyzedPosts = posts.map(p => ({ ...p, engagement: getPostEngagement(p) }));
+  const withEngagement = analyzedPosts.filter(p => p.engagement.total > 0);
+  const totalEngagement = analyzedPosts.reduce((sum, p) => sum + p.engagement.total, 0);
+  const avgEngagement = analyzedPosts.length ? totalEngagement / analyzedPosts.length : 0;
+  const topPosts = [...analyzedPosts].sort((a, b) => b.engagement.total - a.engagement.total).slice(0, 3);
+
+  const mediaViews = getInsightTotal(insights.find(x => x.metric === "page_media_view"));
+  const uniqueViews = getInsightTotal(insights.find(x => x.metric === "page_total_media_view_unique"));
+  const follows = getInsightTotal(insights.find(x => x.metric === "page_follows"));
+
+  const priorities = [];
+  const strengths = [];
+  const blockers = [];
+
+  if (mediaViews !== null) strengths.push(`Pagina a avut aproximativ ${Math.round(mediaViews).toLocaleString("ro-RO")} vizualizări cumulate în perioada analizată.`);
+  if (uniqueViews !== null) strengths.push(`Am primit și date despre aproximativ ${Math.round(uniqueViews).toLocaleString("ro-RO")} persoane unice care au văzut conținutul.`);
+  if (withEngagement.length) strengths.push(`${withEngagement.length} dintre cele ${analyzedPosts.length} postări analizate au primit cel puțin o interacțiune publică.`);
+  if (!withEngagement.length && analyzedPosts.length) blockers.push("Postările recente nu au furnizat suficiente semnale publice de engagement pentru a identifica un format câștigător.");
+
+  if (analyzedPosts.length < 10) blockers.push("Meta a returnat un eșantion mic de postări; concluziile despre conținut trebuie tratate ca orientative.");
+  if (follows === null) blockers.push("Nu avem încă o serie completă pentru urmăririle paginii, deci nu calculăm artificial o rată de creștere.");
+  if (mediaViews !== null && analyzedPosts.length) priorities.push("Compară vizibilitatea totală cu tipurile de postări care au generat cele mai multe interacțiuni.");
+  if (withEngagement.length) priorities.push("Repetă temele și formatele postărilor din topul de engagement, fără să copiezi mecanic conținutul.");
+  priorities.push("În următoarele 7 zile testează o singură ipoteză de conținut și urmărește vizibilitatea + reacțiile + comentariile.");
+  if (!priorities.length) priorities.push("Mai întâi trebuie să strângem suficiente date Meta pentru o analiză comparativă.");
+
+  const plan = [
+    "Ziua 1: alege o temă principală și un obiectiv clar pentru conținut.",
+    "Ziua 2: publică o postare utilă sau educativă și urmărește reacțiile.",
+    "Ziua 3: publică un Reel/video scurt și notează vizibilitatea.",
+    "Ziua 4: publică o postare de poveste sau din culise pentru conversații.",
+    "Ziua 5: publică o ofertă/produs cu un singur CTA clar.",
+    "Ziua 6: repetă formatul care a primit cele mai bune semnale în primele zile.",
+    "Ziua 7: compară rezultatele și păstrează pentru săptămâna următoare ce a funcționat mai bine."
+  ];
+
   return {
-    dataAvailable: hasData,
-    status: hasData ? "Am primit date reale de la Meta" : "Nu sunt disponibile încă suficiente date Insights",
-    priorities: hasData
-      ? [
-          "Verifică evoluția vizualizărilor și compară-le cu baza de urmăritori.",
-          "Identifică postările care aduc cea mai multă vizibilitate și interacțiune.",
-          "În următoarele 7 zile, testează o direcție clară de conținut și urmărește rezultatul."
-        ]
-      : [
-          "Verifică dacă toate permisiunile Meta necesare sunt aprobate pentru aplicație.",
-          "Confirmă că pagina conectată are accesul necesar pentru Insights.",
-          "După ce datele Insights devin disponibile, vom putea analiza vizibilitatea, conținutul și performanța."
-        ],
-    postsAnalyzed: posts.length
+    dataAvailable: hasData || analyzedPosts.length > 0,
+    status: hasData ? "Am primit date reale de la Meta" : "Am primit date publice, dar Insights sunt limitate",
+    windowDays: 28,
+    postsAnalyzed: analyzedPosts.length,
+    totalEngagement,
+    avgEngagement,
+    strengths,
+    blockers,
+    priorities,
+    plan,
+    topPosts: topPosts.map(p => ({
+      id: p.id,
+      message: String(p.message || "").slice(0, 180),
+      created_time: p.created_time,
+      engagement: p.engagement,
+      permalink_url: p.permalink_url || null
+    }))
   };
 }
 
