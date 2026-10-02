@@ -360,7 +360,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
   })).size;
   const consistencyScore = Math.min(10, Math.max(1, activeWeeks * 2.5));
 
-  const engagementPerFollower = followers && analyzedPosts.length ? (avgEngagement / followers) * 100 : null;
+  const engagementPerFollower = followers && avgEngagement !== null ? (avgEngagement / followers) * 100 : null;
   const engagementScore = followers
     ? score10(engagementPerFollower, [
         {max:0.05,score:3},{max:0.10,score:4},{max:0.20,score:5},{max:0.40,score:6},
@@ -368,8 +368,8 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
       ])
     : null;
 
-  const commentsSharesRate = analyzedPosts.length ? (conversationPosts / analyzedPosts.length) * 100 : 0;
-  const conversationScore = score10(commentsSharesRate, [
+  const commentsSharesRate = engagementPosts.length ? (conversationPosts / engagementPosts.length) * 100 : null;
+  const conversationScore = commentsSharesRate === null ? null : score10(commentsSharesRate, [
     {max:5,score:2},{max:10,score:3},{max:20,score:4},{max:30,score:5},
     {max:40,score:6},{max:55,score:7},{max:70,score:8},{max:85,score:9}
   ]);
@@ -425,7 +425,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}) {
     "Ziua 7: compară rezultatele și decide ce merită repetat în săptămâna următoare."
   ];
 
-  const topPosts = [...analyzedPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5);
+  const topPosts = [...engagementPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5);
 
   return {
     dataAvailable: hasData || analyzedPosts.length > 0,
