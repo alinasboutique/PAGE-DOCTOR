@@ -291,6 +291,23 @@ function getInsightTotal(insight) {
 }
 
 function getPostEngagement(post) {
+  // If engagement was fetched separately in the fallback path, use that real data.
+  if (post?.engagement && typeof post.engagement === "object") {
+    const reactions = typeof post.engagement.reactions === "number" ? post.engagement.reactions : null;
+    const comments = typeof post.engagement.comments === "number" ? post.engagement.comments : null;
+    const shares = typeof post.engagement.shares === "number" ? post.engagement.shares : null;
+    const available = [reactions, comments, shares].some(v => v !== null);
+    return {
+      reactions,
+      comments,
+      shares,
+      total: available
+        ? [reactions, comments, shares].filter(v => v !== null).reduce((sum, v) => sum + v, 0)
+        : null,
+      available
+    };
+  }
+
   const hasLikes = typeof post?.likes?.summary?.total_count === "number";
   const hasReactions = typeof post?.reactions?.summary?.total_count === "number";
   const hasComments = typeof post?.comments?.summary?.total_count === "number";
