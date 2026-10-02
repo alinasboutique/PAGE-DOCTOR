@@ -9,7 +9,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 10000;
 const BASE_URL = (process.env.APP_BASE_URL || "").replace(/\/+$/, "");
-const META_APP_ID
+const META_APP_ID = process.env.META_APP_ID;
 const META_CONFIG_ID = process.env.META_CONFIG_ID;= 
 const META_APP_SECRET = process.env.META_APP_SECRET;
 const META_GRAPH_VERSION = process.env.META_GRAPH_VERSION || "v26.0";
