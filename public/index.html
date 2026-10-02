@@ -105,7 +105,8 @@ function showResult(d){
  else cats.forEach(c=>{
    const div=document.createElement('div');div.className='content-row';
    const mark=c.category===d.diagnostic?.bestCategory?.category?' ⭐':''; 
-   div.innerHTML='<div><strong>'+c.category+mark+'</strong><br><span>'+c.count+' postări analizate</span></div><div><strong>'+Math.round(c.avgEngagement).toLocaleString('ro-RO')+'</strong><br><span>interacțiuni medii/postare</span></div>';
+   const avg=c.avgEngagement===null?'Indisponibil':Math.round(c.avgEngagement).toLocaleString('ro-RO');
+   div.innerHTML='<div><strong>'+c.category+mark+'</strong><br><span>'+c.count+' postări analizate</span></div><div><strong>'+avg+'</strong><br><span>interacțiuni medii/postare</span></div>';
    ct.appendChild(div);
  });
  const available=(d.insights||[]).filter(x=>!x.unavailable);
