@@ -84,20 +84,37 @@ app.get("/auth/meta/callback", async (req, res) => {
     if (!code) throw new Error("Meta did not return an authorization code.");
 
     const redirectUri = `${BASE_URL}/auth/meta/callback`;
-    const token = await metaGet("oauth/access_token", {
-      client_id: META_APP_ID,
-      client_secret: META_APP_SECRET,
-      redirect_uri: redirectUri,
-      code
-    });
+    let token;
 
-    // Exchange the short-lived user token for a long-lived token.
-    const longToken = await metaGet("oauth/access_token", {
-      grant_type: "fb_exchange_token",
-      client_id: META_APP_ID,
-      client_secret: META_APP_SECRET,
-      fb_exchange_token: token.access_token
-    });
+try {
+  token = await metaGet("oauth/access_token", {
+    client_id: META_APP_ID,
+    client_secret: META_APP_SECRET,
+    redirect_uri: redirectUri,
+    code
+  });
+
+  console.log("STEP 1 OK: short-lived token received");
+} catch (e) {
+  console.error("STEP 1 FAILED: code exchange", e.meta || e);
+  throw new Error(`STEP 1 - Code exchange failed: ${e.message}`);
+}
+
+let longToken;
+
+try {
+  longToken = await metaGet("oauth/access_token", {
+    grant_type: "fb_exchange_token",
+    client_id: META_APP_ID,
+    client_secret: META_APP_SECRET,
+    fb_exchange_token: token.access_token
+  });
+
+  console.log("STEP 2 OK: long-lived token received");
+} catch (e) {
+  console.error("STEP 2 FAILED: long-lived token exchange", e.meta || e);
+  throw new Error(`STEP 2 - Long-lived token exchange failed: ${e.message}`);
+}
 
     const pages = await metaGet("me/accounts", {
       access_token: longToken.access_token || token.access_token,
