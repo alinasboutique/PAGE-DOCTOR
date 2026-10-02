@@ -42,6 +42,7 @@
 <div id="summary" class="success"></div>
 <div class="grid" id="metrics"></div>
 <div class="diagnostic"><h3>🎯 Priorități</h3><div id="priorities"></div></div>
+<div class="diagnostic"><h3>📌 Ce am analizat</h3><div id="analysisNote" class="sub"></div></div>
 </section>
 </div>
 <script>
@@ -55,16 +56,42 @@ function startAnalysis(){
  sessionStorage.setItem('pageDoctorTarget',url);
  window.location.href='/auth/meta?return='+encodeURIComponent('/');
 }
+function metricLabel(metric){
+ const labels={
+  page_total_media_view_unique:'Persoane care au văzut conținutul',
+  page_media_view:'Vizualizări ale conținutului',
+  page_follows:'Urmăriri ale paginii'
+ };
+ return labels[metric]||metric;
+}
+function metricValue(x){
+ if(x.unavailable)return 'Date indisponibile în acest moment';
+ const rows=Array.isArray(x.data)?x.data:[];
+ const values=rows.flatMap(r=>Array.isArray(r.values)?r.values:[]);
+ if(!values.length)return 'Date disponibile, dar fără valori afișabile';
+ const last=values[values.length-1]?.value;
+ if(typeof last==='number')return last.toLocaleString('ro-RO');
+ if(last&&typeof last==='object')return Object.entries(last).map(([k,v])=>k+': '+Number(v).toLocaleString('ro-RO')).join(' · ');
+ return String(last??'Date disponibile');
+}
 function showResult(d){
  document.getElementById('result').classList.remove('hidden');
  document.getElementById('pageName').textContent=d.page?.name||'Pagina conectată';
+ const available=(d.insights||[]).filter(x=>!x.unavailable);
+ const unavailable=(d.insights||[]).filter(x=>x.unavailable);
  document.getElementById('summary').innerHTML=d.diagnostic?.dataAvailable
- ? '<strong>✓ Am primit date reale de la Meta.</strong><br>Putem începe analiza pe baza datelor disponibile.'
- : '<strong>Conexiunea a reușit, dar Insights nu sunt încă disponibile.</strong><br>Verifică permisiunile aprobate și cerințele Meta.';
+ ? '<strong>✓ Analiza a primit date reale de la Meta.</strong><br>Mai jos vezi indicatorii disponibili și primele concluzii pentru pagina ta.'
+ : '<strong>Conectarea a reușit, dar Meta nu oferă încă suficiente date Insights.</strong><br>Vom păstra doar indicatorii disponibili și nu vom inventa rezultate.';
  const m=document.getElementById('metrics');m.innerHTML='';
- (d.insights||[]).forEach(x=>{const div=document.createElement('div');div.className='step';div.innerHTML='<b>'+x.metric+'</b><span>'+(x.unavailable?'Indisponibil: '+x.error:('Date primite: '+(x.data?.length||0)+' puncte'))+'</span>';m.appendChild(div)});
+ (d.insights||[]).forEach(x=>{
+   const div=document.createElement('div');div.className='step';
+   div.innerHTML='<b>'+metricLabel(x.metric)+'</b><span>'+metricValue(x)+(x.unavailable?'':'<br><small>'+((x.data||[]).length)+' perioade de date primite</small>')+'</span>';
+   m.appendChild(div);
+ });
  const p=document.getElementById('priorities');p.innerHTML='';
  (d.diagnostic?.priorities||[]).forEach(x=>{const div=document.createElement('div');div.className='priority';div.textContent='• '+x;p.appendChild(div)});
+ const note=document.getElementById('analysisNote');
+ note.textContent='Am analizat '+available.length+' indicatori Meta disponibili și '+(d.posts?.length||0)+' postări recente. '+(unavailable.length?' '+unavailable.length+' indicatori nu sunt disponibili pentru această pagină și nu sunt folosiți în concluzii.':'');
  document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
 const stored=sessionStorage.getItem('pageDoctorResult');
