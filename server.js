@@ -116,10 +116,28 @@ try {
   throw new Error(`STEP 2 - Long-lived token exchange failed: ${e.message}`);
 }
 
-    const pages = await metaGet("me/accounts", {
-      access_token: longToken.access_token || token.access_token,
-      fields: "id,name,access_token,tasks"
-    });
+    const activeToken = longToken.access_token || token.access_token;
+
+const me = await metaGet("/me", {
+  access_token: activeToken,
+  fields: "id,name"
+});
+
+console.log("META USER:", {
+  id: me.id,
+  name: me.name
+});
+
+const pages = await metaGet("/me/accounts", {
+  access_token: activeToken,
+  fields: "id,name,tasks"
+});
+
+console.log("META PAGES:", (pages.data || []).map(p => ({
+  id: p.id,
+  name: p.name,
+  tasks: p.tasks || []
+})));
 
     // Do not put access tokens in the browser URL. For the first version,
     // the selected Page data is encoded into a short-lived server-side handoff.
