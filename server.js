@@ -240,10 +240,36 @@ app.post("/api/analyze", async (req, res) => {
       try {
         const feed = await metaGet(`${page.id}/feed`, {
           access_token: token,
-          fields: "id,message,created_time,permalink_url",
+          fields: "id,message,created_time,permalink_url,type,status_type",
           limit: "50"
         });
         result.posts = feed.data || [];
+        result.posts_engagement_source = "per-post";
+
+        for (const post of result.posts) {
+          const engagement = { reactions: null, comments: null, shares: null, total: null, available: false };
+          try {
+            const d = await metaGet(post.id, {
+              access_token: token,
+              fields: "likes.limit(0).summary(true),comments.limit(0).summary(true),shares"
+            });
+            const likes = d?.likes?.summary?.total_count;
+            const comments = d?.comments?.summary?.total_count;
+            const shares = d?.shares?.count;
+            engagement.reactions = typeof likes === "number" ? likes : null;
+            engagement.comments = typeof comments === "number" ? comments : null;
+            engagement.shares = typeof shares === "number" ? shares : null;
+          } catch (postError) {
+            console.error("POST ENGAGEMENT FAILED:", post.id, postError.meta || postError);
+          }
+          engagement.available = [engagement.reactions, engagement.comments, engagement.shares].some(v => v !== null);
+          if (engagement.available) {
+            engagement.total = [engagement.reactions, engagement.comments, engagement.shares]
+              .filter(v => typeof v === "number")
+              .reduce((sum, v) => sum + v, 0);
+          }
+          post.engagement = engagement;
+        }
       } catch (fallbackError) {
         result.posts_error = fallbackError.message;
       }
