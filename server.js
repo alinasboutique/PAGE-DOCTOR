@@ -117,6 +117,17 @@ try {
 }
 
     const activeToken = longToken.access_token || token.access_token;
+    const perms = await metaGet("/me/permissions", {
+  access_token: activeToken
+});
+
+console.log(
+  "META PERMISSIONS:",
+  (perms.data || []).map(p => ({
+    permission: p.permission,
+    status: p.status
+  }))
+);
 
 const me = await metaGet("/me", {
   access_token: activeToken,
