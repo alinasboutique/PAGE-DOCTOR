@@ -677,7 +677,7 @@ function renderPageSelector(data, state) {
     document.querySelectorAll(".page-option").forEach(x=>x.disabled=true);
     const s=document.getElementById("status"); s.style.display="block"; s.textContent="Se preiau datele reale de la Meta...";
     try{
-      const r=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({state,pageId:btn.dataset.id})});
+      const r=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({state,pageId:btn.dataset.id,...JSON.parse(sessionStorage.getItem("pageDoctorPrefs")||"{}")})});
       const d=await r.json(); if(!r.ok) throw new Error(d.error||"Eroare");
       sessionStorage.setItem("pageDoctorResult",JSON.stringify(d));
       location.href="/?connected=1";
