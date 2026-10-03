@@ -827,24 +827,28 @@ function generateRepurposedPosts({ topPost }) {
     .replace(/\s+/g, " ")
     .trim();
 
+  // Split into complete sentences, treating "..." as part of the same sentence.
   const sentences = clean(base)
-    .split(/(?<=[.!?…])\s+/)
+    .split(/(?<=[.!?])\s+/)
     .map(s => s.trim())
     .filter(Boolean);
+
+  const unique = arr => [...new Set(arr.map(clean).filter(Boolean))];
 
   const first = sentences[0] || base;
   const commercial = sentences.find(s => /\b(comand|comenzi|plasa|prelu|preț|pret|ofert|disponibil|livr|rezerv|înainte de|până la|pana la)\b/i.test(s)) || "";
   const returnSentence = sentences.find(s => /\b(întorc|intorc|revin|reven|atelier|pauz|odihn)\b/i.test(s)) || "";
-  const emotional = sentences.find(s => /\b(sper|probabil|cumva|mă gând|ma gand|bucur|emoț|emot)\b/i.test(s)) || "";
+  const emotional = sentences.find(s =>
+    /\b(sper|probabil|cumva|mă gând|ma gand|bucur|emoț|emot)\b/i.test(s) &&
+    clean(s) !== clean(first) &&
+    clean(s) !== clean(commercial) &&
+    clean(s) !== clean(returnSentence)
+  ) || "";
 
   function rewriteHook(text) {
     const t = clean(text);
     if (/încheie luna septembrie/i.test(t)) {
-      return t.replace(/^Setul acesta de moț/i, "Ultimul set de moț din septembrie")
-        .replace(/\.\s*Și, cumva, odată cu el se apropie și mica mea pauză\.\.\./i, ". Odată cu el se apropie și câteva zile de pauză.");
-    }
-    if (/încheie luna/i.test(t)) {
-      return t.replace(/^(.{0,80})\.\s*/i, "$1. Și odată cu el se încheie și perioada aceasta de lucru.");
+      return t.replace(/^Setul acesta de moț/i, "Ultimul set de moț din septembrie");
     }
     return t;
   }
@@ -852,29 +856,20 @@ function generateRepurposedPosts({ topPost }) {
   function rewriteCommercial(text) {
     const t = clean(text);
     const days = t.match(/(?:mai sunt|mai am)\s+(\d+)\s+zile/i);
-    const deadline = t.match(/înainte de\s+([^,.]+(?:\s+\w+)?)/i) || t.match(/până la\s+([^,.]+)/i);
+    const deadline = t.match(/(?:înainte de|până la|pana la)\s+([^,.]+)/i);
     if (days && deadline) {
-      return "Mai sunt doar " + days[1] + " zile pentru comenzi care trebuie să ajungă înainte de " + deadline[1].trim() + ".";
+      return "Mai sunt doar " + days[1] + " zile pentru comenzile care trebuie să ajungă înainte de " + deadline[1].trim() + ".";
     }
-    if (days) {
-      return "Mai sunt doar " + days[1] + " zile în care pot prelua comenzi.";
-    }
-    if (deadline) {
-      return "Dacă ai nevoie de comandă înainte de " + deadline[1].trim() + ", acum este momentul să-mi scrii.";
-    }
+    if (days) return "Mai sunt doar " + days[1] + " zile în care pot prelua comenzi.";
+    if (deadline) return "Dacă ai nevoie de comandă înainte de " + deadline[1].trim() + ", acum este momentul să-mi scrii.";
     return t;
   }
 
   function rewriteReturn(text) {
     const t = clean(text);
     const date = t.match(/(?:începând cu|din|de la)\s+(\d{1,2}\s+\w+)/i);
-    if (date) {
-      return "Din " + date[1] + " revin în atelier și redeschid comenzile.";
-    }
-    if (/revin|mă întorc|ma intorc/i.test(t)) {
-      return t.replace(/Începând cu/gi, "Din");
-    }
-    return t;
+    if (date) return "Din " + date[1] + " revin în atelier și redeschid comenzile.";
+    return t.replace(/Începând cu/gi, "Din");
   }
 
   function rewriteEmotion(text) {
@@ -883,7 +878,7 @@ function generateRepurposedPosts({ topPost }) {
       return "Pauza vine la timp, chiar dacă știu deja că o să-mi fugă gândul tot la materiale și la următoarele seturi.";
     }
     if (/sper să reușesc|sper sa reusesc/i.test(t)) {
-      return t.replace(/^Sper să reușesc/i, "Sper să-mi fac puțin timp pentru odihnă").replace(/^Sper sa reusesc/i, "Sper să-mi fac puțin timp pentru odihnă");
+      return t;
     }
     return t;
   }
@@ -893,57 +888,69 @@ function generateRepurposedPosts({ topPost }) {
   const returnText = returnSentence ? rewriteReturn(returnSentence) : "";
   const emotion = emotional ? rewriteEmotion(emotional) : "";
 
+  // Each sentence can belong to only one block. This prevents the same
+  // sentence from appearing twice in the carousel, Reel, Stories or caption.
+  const blocks = unique([hook, sale, returnText, emotion]);
+
+  const fallbackDetails = unique(
+    sentences.filter(s => !blocks.includes(clean(s)))
+  );
+
+  const detail = fallbackDetails[0] || "";
   const cta = sale
     ? "Ai nevoie de un set înainte de termenul menționat? Scrie-mi și stabilim detaliile comenzii."
-    : "Dacă ți-a plăcut ideea din postarea aceasta, spune-mi în comentarii ce parte ți-a atras atenția.";
+    : "Dacă ți-a plăcut povestea din postarea aceasta, spune-mi ce parte ți-a atras atenția.";
 
-  const carousel = [
+  const carousel = unique([
     "SLIDE 1 · " + hook,
-    sale || (sentences[1] ? clean(sentences[1]) : "Păstrăm aici ideea principală din postarea originală, dar o spunem mai scurt și mai clar."),
-    returnText || (sentences[2] ? clean(sentences[2]) : ""),
-    emotion || "Un detaliu personal din spatele postării: păstrează aici informația reală care a făcut postarea originală memorabilă.",
+    sale ? "SLIDE 2 · " + sale : "",
+    returnText ? "SLIDE 3 · " + returnText : "",
+    emotion ? "SLIDE 4 · " + emotion : detail ? "SLIDE 4 · " + detail : "",
     "SLIDE 5 · CTA · " + cta
-  ].filter(Boolean);
+  ]);
 
-  const reelFrames = [
+  const reelFrames = unique([
     "0–3s · HOOK · " + hook,
-    "3–7s · INFORMAȚIA IMPORTANTĂ · " + (sale || clean(sentences[1] || "")),
-    "7–11s · PARTEA PERSONALĂ · " + (emotion || returnText || clean(sentences[2] || "")),
+    sale ? "3–7s · INFORMAȚIA IMPORTANTĂ · " + sale : "",
+    returnText || emotion || detail ? "7–11s · CONTINUARE · " + (returnText || emotion || detail) : "",
     "11–15s · CTA · " + cta
-  ].filter(x => !x.endsWith("· "));
+  ]);
 
-  const stories = [
+  const stories = unique([
     "STORY 1 · " + hook,
-    "STORY 2 · " + (sale || clean(sentences[1] || "")),
-    "STORY 3 · " + (returnText || emotion || clean(sentences[2] || "")),
+    sale ? "STORY 2 · " + sale : "",
+    returnText || emotion || detail ? "STORY 3 · " + (returnText || emotion || detail) : "",
     "STORY 4 · " + cta
-  ].filter(x => !x.endsWith("· "));
+  ]);
 
+  // The caption is a NEW, concise version. It is not the original caption
+  // and it is not a concatenation of the slide texts.
   const newCaption = [
     hook,
     sale,
     returnText,
-    emotion
+    emotion,
+    cta
   ].filter(Boolean).join(" ");
 
   return [
     {
       title: "1 · Carusel",
-      format: carousel.length + " slide-uri · ideea originală rescrisă și împărțită logic",
+      format: carousel.length + " slide-uri · aceeași idee, rescrisă într-o poveste coerentă",
       slides: carousel,
       caption: newCaption,
       cta
     },
     {
       title: "2 · Reel",
-      format: "15 secunde · aceeași idee, spusă natural în video",
+      format: "15 secunde · aceeași idee, rescrisă pentru video",
       frames: reelFrames,
       caption: newCaption,
       cta
     },
     {
       title: "3 · Stories",
-      format: stories.length + " cadre · aceeași idee, adaptată pentru Stories",
+      format: stories.length + " cadre · aceeași idee, rescrisă pentru Stories",
       stories,
       caption: newCaption,
       cta
