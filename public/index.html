@@ -71,6 +71,12 @@
 </div>
 
 <div class="diagnostic">
+  <h3>🧠 Ce vrea publicul meu?</h3>
+  <p class="section-help">Nu ghicim preferințele publicului. Folosim semnalele observate în ultimele 28 de zile și spunem clar când datele sunt doar orientative.</p>
+  <div id="audienceInsights"></div>
+</div>
+
+<div class="diagnostic">
   <h3>🎯 Ce să schimbi acum</h3>
   <div id="priorities"></div>
 </div>
@@ -207,6 +213,31 @@ function showResult(d){
 
  addItems('strengths',diag.strengths,'Nu avem încă suficiente date pentru a identifica un punct forte clar.');
  addItems('blockers',diag.blockers,'Nu a fost identificat un blocaj clar din datele disponibile.');
+ const ai=document.getElementById('audienceInsights'); ai.innerHTML='';
+ const aud=diag.audienceInsights;
+ if(!aud||!aud.available){
+   ai.innerHTML='<div class="priority"><strong>'+escapeText(aud?.title||'Ce vrea publicul meu?')+'</strong><span>'+escapeText(aud?.summary||'Nu avem suficiente date pentru această concluzie.')+'</span></div>';
+ }else{
+   const head=document.createElement('div'); head.className='post-insight';
+   head.innerHTML='<h4>'+escapeText(aud.title)+'</h4><p>'+escapeText(aud.summary)+'</p><div class="insight-chip"><b>Nivel de încredere</b><span>'+escapeText(aud.confidence||'orientativă')+'</span></div>';
+   ai.appendChild(head);
+   (aud.signals||[]).forEach(x=>{
+     const div=document.createElement('div'); div.className='priority';
+     div.innerHTML='<strong>'+escapeText(x.title)+'</strong><span>'+escapeText(x.detail)+'</span>';
+     if(x.value!==null&&x.value!==undefined) div.innerHTML+='<small style="display:block;margin-top:7px;color:#8a7d77">'+escapeText(String(x.value))+'</small>';
+     ai.appendChild(div);
+   });
+   if((aud.actions||[]).length){
+     const box=document.createElement('div'); box.className='priority';
+     box.innerHTML='<strong>🎯 Ce să faci cu informația asta</strong><span>'+aud.actions.map(x=>'• '+escapeText(x)).join('<br>')+'</span>';
+     ai.appendChild(box);
+   }
+   if((aud.evidence||[]).length){
+     const box=document.createElement('details'); box.className='data-details';
+     box.innerHTML='<summary>🔎 Dovezile folosite</summary><div class="sub">'+aud.evidence.map(x=>'<div style="margin:8px 0">• '+escapeText(x)+'</div>').join('')+'</div>';
+     ai.appendChild(box);
+   }
+ }
  addItems('priorities',diag.priorities,'Mai avem nevoie de date pentru priorități.');
 
  const top=document.getElementById('topPosts');top.innerHTML='';
