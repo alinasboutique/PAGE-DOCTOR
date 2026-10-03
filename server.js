@@ -181,7 +181,7 @@ app.get("/select-page", (req, res) => {
 
 app.post("/api/analyze", async (req, res) => {
   try {
-    const { state, pageId, niche, goal } = req.body || {};
+    const { state, pageId, niche, goal, timezone } = req.body || {};
     const payload = readState(state);
     if (payload.kind !== "pages") throw new Error("Invalid selection state.");
     const page = payload.pages.find(p => p.id === pageId);
@@ -310,7 +310,7 @@ app.post("/api/analyze", async (req, res) => {
       available: result.posts.filter(p => p?.engagement?.available).length
     });
 
-    result.diagnostic = buildDiagnostic(result.insights, result.posts, result.page, { niche, goal });
+    result.diagnostic = buildDiagnostic(result.insights, result.posts, result.page, { niche, goal, timezone });
     res.json(result);
   } catch (e) {
     console.error("Analyze error:", e.meta || e);
@@ -541,6 +541,13 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
     permalink_url: topPost.permalink_url || null
   } : null;
 
+
+  const postingTimes = buildPostingTimeInsights({
+    analyzedPosts,
+    engagementPosts,
+    timezone: prefs.timezone
+  });
+
   return {
     dataAvailable: hasData || analyzedPosts.length > 0,
     status: hasData ? "Am primit date reale de la Meta" : "Am primit date publice, dar Insights sunt limitate",
@@ -557,7 +564,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
     blockers,
     priorities: priorities.slice(0,3),
     plan,
-    contentPlan,
+    contentPlan,\n    postingTimes,
     audienceInsights,
     topPostAnalysis,
     repurposedPosts,
@@ -570,6 +577,123 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
       engagement: p.engagement,
       permalink_url: p.permalink_url || null
     }))
+  };
+}
+
+
+function buildPostingTimeInsights({ analyzedPosts = [], engagementPosts = [], timezone }) {
+  const tz = typeof timezone === "string" && timezone.trim()
+    ? timezone.trim()
+    : "UTC";
+
+  const weekdayNames = ["Duminică","Luni","Marți","Miercuri","Joi","Vineri","Sâmbătă"];
+  const slots = {};
+  const days = {};
+
+  const getParts = (date) => {
+    try {
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz,
+        weekday: "short",
+        hour: "2-digit",
+        hour12: false
+      }).formatToParts(date);
+      const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+      const weekdayMap = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+      const weekday = weekdayMap[map.weekday];
+      let hour = Number(map.hour);
+      if (hour === 24) hour = 0;
+      if (!Number.isInteger(weekday) || !Number.isFinite(hour)) return null;
+      return { weekday, hour };
+    } catch {
+      return null;
+    }
+  };
+
+  engagementPosts.forEach(post => {
+    if (!post?.created_time || !post?.engagement?.available || post.engagement.total === null) return;
+    const parts = getParts(new Date(post.created_time));
+    if (!parts) return;
+
+    const slotStart = Math.floor(parts.hour / 2) * 2;
+    const key = parts.weekday + "-" + slotStart;
+    if (!slots[key]) slots[key] = {
+      weekday: parts.weekday,
+      start: slotStart,
+      end: slotStart + 2,
+      count: 0,
+      total: 0
+    };
+    slots[key].count++;
+    slots[key].total += post.engagement.total;
+
+    const dayKey = String(parts.weekday);
+    if (!days[dayKey]) days[dayKey] = { weekday: parts.weekday, count: 0, total: 0 };
+    days[dayKey].count++;
+    days[dayKey].total += post.engagement.total;
+  });
+
+  const slotRows = Object.values(slots)
+    .filter(x => x.count >= 2)
+    .map(x => ({
+      weekday: weekdayNames[x.weekday],
+      weekdayIndex: x.weekday,
+      start: x.start,
+      end: x.end,
+      count: x.count,
+      avgEngagement: x.total / x.count
+    }))
+    .sort((a,b) => b.avgEngagement - a.avgEngagement);
+
+  const dayRows = Object.values(days)
+    .filter(x => x.count >= 2)
+    .map(x => ({
+      weekday: weekdayNames[x.weekday],
+      weekdayIndex: x.weekday,
+      count: x.count,
+      avgEngagement: x.total / x.count
+    }))
+    .sort((a,b) => b.avgEngagement - a.avgEngagement);
+
+  const engagementCount = engagementPosts.length;
+
+  if (!engagementCount || !slotRows.length) {
+    return {
+      available: false,
+      timezone: tz,
+      title: "Când să postezi?",
+      summary: "Nu avem încă suficiente postări cu engagement disponibil în intervale comparabile pentru a recomanda responsabil o oră.",
+      recommendations: [],
+      bestDays: dayRows.slice(0,3),
+      sampleSize: engagementCount,
+      confidence: engagementCount >= 10 ? "medie" : "scăzută"
+    };
+  }
+
+  const recommendations = slotRows.slice(0, 3).map((x, i) => ({
+    rank: i + 1,
+    weekday: x.weekday,
+    start: x.start,
+    end: x.end,
+    label: String(x.start).padStart(2,"0") + ":00–" + String(x.end).padStart(2,"0") + ":00",
+    avgEngagement: Math.round(x.avgEngagement * 10) / 10,
+    posts: x.count
+  }));
+
+  const best = recommendations[0];
+  const confidence =
+    engagementCount >= 20 ? "ridicată" :
+    engagementCount >= 10 ? "medie" : "orientativă";
+
+  return {
+    available: true,
+    timezone: tz,
+    title: "Când să postezi?",
+    summary: "Intervalele de mai jos sunt calculate din performanța reală a postărilor analizate. Nu sunt ore universale și nu reprezintă activitatea live a urmăritorilor.",
+    recommendations,
+    bestDays: dayRows.slice(0,3),
+    sampleSize: engagementCount,
+    confidence
   };
 }
 
