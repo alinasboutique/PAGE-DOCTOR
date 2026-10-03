@@ -78,7 +78,7 @@
 
 <div class="diagnostic">
   <h3>🕐 Când să postezi?</h3>
-  <p class="section-help">Nu folosim ore universale. Page Doctor compară zilele și intervalele orare în care postările tale au obținut cele mai bune rezultate. Orele sunt afișate în fusul orar al dispozitivului tău.</p>
+  <p class="section-help">Nu folosim ore universale. Page Doctor compară combinațiile zi + interval orar în care postările tale au obținut cele mai bune rezultate. Orele sunt afișate în fusul orar al dispozitivului tău.</p>
   <div id="postingTimes"></div>
 </div>
 
@@ -252,15 +252,10 @@ function showResult(d){
    pt.innerHTML='<div class="priority"><strong>'+escapeText(timing?.title||'Când să postezi?')+'</strong><span>'+escapeText(timing?.summary||'Nu avem suficiente date pentru o recomandare.')+'</span>'+(timing?.sampleSize!==undefined?'<small style="display:block;margin-top:7px;color:#8a7d77">Postări cu engagement disponibile: '+escapeText(String(timing.sampleSize))+'</small>':'')+'</div>';
  } else {
    const head=document.createElement('div'); head.className='post-insight';
-   head.innerHTML='<h4>🎯 Cele mai bune intervale observate</h4><p>'+escapeText(timing.summary)+'</p><div class="insight-grid">'+
+   head.innerHTML='<h4>🎯 Cele mai bune momente observate</h4><p>'+escapeText(timing.summary)+'</p><div class="insight-grid">'+
      (timing.recommendations||[]).map(x=>'<div class="insight-chip"><b>#'+escapeText(String(x.rank))+' · '+escapeText(x.weekday)+'</b><span>'+escapeText(x.label)+'</span><small style="display:block;margin-top:5px;color:#8a7d77">'+Number(x.avgEngagement).toLocaleString('ro-RO')+' interacțiuni medii · '+escapeText(String(x.posts))+' postări</small></div>').join('')+
      '</div><div class="priority"><strong>🕐 Cum să folosești informația</strong><span>Folosește aceste intervale pentru postările importante, dar tratează-le ca punct de pornire pentru următorul test. Performanța poate varia în funcție de temă, format și conținut.</span></div>';
    pt.appendChild(head);
-   if((timing.bestDays||[]).length){
-     const days=document.createElement('div'); days.className='priority';
-     days.innerHTML='<strong>📅 Zilele cu cele mai bune medii</strong><span>'+timing.bestDays.map(x=>'• '+escapeText(x.weekday)+' — '+Number(x.avgEngagement).toLocaleString('ro-RO')+' interacțiuni medii ('+escapeText(String(x.count))+' postări)').join('<br>')+'</span>';
-     pt.appendChild(days);
-   }
    const conf=document.createElement('div'); conf.className='section-help';
    conf.textContent='Încredere: '+(timing.confidence||'orientativă')+' · eșantion: '+(timing.sampleSize||0)+' postări cu engagement disponibil.';
    pt.appendChild(conf);
