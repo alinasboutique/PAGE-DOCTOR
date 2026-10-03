@@ -1,6 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 app.use(express.json());
@@ -995,6 +996,64 @@ function renderPageSelector(data, state) {
   </script></body></html>`;
 }
 
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/", (req, res) => {
+  const file = path.join(__dirname, "public", "index.html");
+  let html = fs.readFileSync(file, "utf8");
+  html = html
+    .replace("✍️ Ce să postezi în continuare?", "✍️ Ce să postezi în continuare?")
+    .replace("3 variante inspirate din postarea ta cu cele mai multe interacțiuni", "3 postări noi, fiecare cu un scop diferit")
+    .replace("✨ Generează 3 variante", "✨ Creează 3 postări noi")
+    .replace("🔄 Transformă postarea care a mers în alte formate", "♻️ Nu lăsa postarea care a mers să fie folosită o singură dată")
+    .replace("Aici NU inventăm alte idei. Păstrăm aceeași postare și o adaptăm pentru Carusel, Reel și Stories.", "Aici nu inventăm o idee nouă. Refolosim aceeași postare și o transformăm concret în Carusel, Reel și Stories.")
+    .replace("🔄 Transformă în alte formate", "🔄 Refolosește postarea");
+
+  const override = `
+<script>
+(function(){
+  const originalGenerate = window.generateNextPosts;
+  window.generateNextPosts = function(){
+    const d=window.pageDoctorData||{}, diag=d.diagnostic||{}, items=diag.nextPosts||[], out=document.getElementById('generatedPosts');
+    if(!out) return;
+    out.innerHTML='';
+    if(!items.length){
+      out.innerHTML='<div class="priority">Nu avem încă suficiente date pentru a construi postări noi pe baza unui semnal real.</div>';
+      return;
+    }
+    items.forEach(function(v){
+      const div=document.createElement('div');
+      div.className='variant';
+      div.innerHTML='<b>'+escapeText(v.title)+'</b><div class="mini" style="margin-top:4px">🎯 '+escapeText(v.objective)+'</div><p><strong>De ce aceasta?</strong> '+escapeText(v.reason)+'</p><p><strong>🔥 '+escapeText(v.hook)+'</strong></p><div style="white-space:pre-line;margin-top:10px">'+escapeText(v.caption)+'</div><p><strong>👉 '+escapeText(v.cta)+'</strong></p><div class="mini">📊 '+escapeText(v.evidence||'')+'</div>';
+      out.appendChild(div);
+    });
+    out.scrollIntoView({behavior:'smooth',block:'nearest'});
+  };
+
+  window.repurposeTopPost = function(){
+    const d=window.pageDoctorData||{}, items=d.diagnostic?.repurposedPosts||[], out=document.getElementById('repurposedPosts');
+    if(!out) return;
+    out.innerHTML='';
+    if(!items.length){
+      out.innerHTML='<div class="priority">Nu există încă suficiente date pentru a transforma postarea principală.</div>';
+      return;
+    }
+    items.forEach(function(v){
+      const div=document.createElement('div');
+      div.className='variant';
+      let html='<b>'+escapeText(v.title)+'</b><div class="mini">'+escapeText(v.format||'')+'</div>';
+      if(v.slides) html+='<div style="margin-top:10px">'+v.slides.map(function(x){return '<div class="priority" style="margin-top:7px">'+escapeText(x)+'</div>';}).join('')+'</div>';
+      if(v.frames) html+='<div style="margin-top:10px">'+v.frames.map(function(x){return '<div class="priority" style="margin-top:7px">'+escapeText(x)+'</div>';}).join('')+'</div>';
+      if(v.stories) html+='<div style="margin-top:10px">'+v.stories.map(function(x){return '<div class="priority" style="margin-top:7px">'+escapeText(x)+'</div>';}).join('')+'</div>';
+      html+='<p><strong>Caption:</strong> '+escapeText(v.caption||'')+'</p><strong>👉 '+escapeText(v.cta||'')+'</strong>';
+      div.innerHTML=html;
+      out.appendChild(div);
+    });
+    out.scrollIntoView({behavior:'smooth',block:'nearest'});
+  };
+})();
+</script>`;
+
+  html = html.replace("</body>", override + "</body>");
+  res.send(html);
+});
 
 app.listen(PORT, () => console.log(`Page Doctor listening on ${PORT}`));
