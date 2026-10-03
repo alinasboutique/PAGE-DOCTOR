@@ -818,46 +818,64 @@ function generateNextPosts({ niche, goal, topPost, pageInfo, bestCategory, avgEn
 
 function generateRepurposedPosts({ topPost }) {
   if (!topPost) return [];
-  const base = String(topPost.message || "").replace(/\s+/g, " ").trim();
-  const hook = base ? base.slice(0, 140) : "Ideea postării care a funcționat";
+
+  const base = String(topPost.message || "").replace(/\\s+/g, " ").trim();
+  if (!base) return [];
+
+  // We keep the original idea intact. We do not invent a new story and we
+  // never cut a sentence in the middle just to fit a character limit.
+  const sentences = base
+    .split(/(?<=[.!?…])\\s+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const firstSentence = sentences[0] || base;
+  const secondSentence = sentences[1] || "";
+  const remaining = sentences.slice(2).join(" ").trim();
+
+  const carousel = [
+    "SLIDE 1 · " + firstSentence,
+    secondSentence ? "SLIDE 2 · " + secondSentence : "SLIDE 2 · Continuă povestea din postarea originală cu următoarea idee completă, fără să schimbi mesajul.",
+    remaining ? "SLIDE 3 · " + remaining : "SLIDE 3 · Arată produsul / momentul principal din postarea originală și păstrează aceeași poveste.",
+    "SLIDE 4 · DETALIUL DIN SPATE · Adaugă aici detaliul concret care apare deja în postarea originală sau în fotografie. Nu inventa un detaliu nou.",
+    "SLIDE 5 · FINAL · Încheie aceeași poveste cu o întrebare sau un CTA care are legătură directă cu postarea originală."
+  ];
+
+  const reelFrames = [
+    "0–3s · HOOK · " + firstSentence,
+    secondSentence ? "3–7s · CONTINUARE · " + secondSentence : "3–7s · CONTINUARE · Folosește următoarea parte completă din textul original.",
+    remaining ? "7–11s · CONTEXT · " + remaining : "7–11s · CONTEXT · Arată detaliul principal deja prezent în postarea originală.",
+    "11–15s · FINAL · Revino la ideea din postarea originală și încheie cu același mesaj, nu cu o idee nouă."
+  ];
+
+  const stories = [
+    "STORY 1 · " + firstSentence,
+    secondSentence ? "STORY 2 · " + secondSentence : "STORY 2 · Continuarea textului original.",
+    remaining ? "STORY 3 · " + remaining : "STORY 3 · Arată partea principală a postării originale.",
+    "STORY 4 · Întrebare/CTA · Leagă răspunsul direct de povestea din postarea originală."
+  ];
+
   return [
     {
       title: "1 · Carusel",
-      format: "5 slide-uri · text gata de pus pe design",
-      slides: [
-        "SLIDE 1 · " + hook,
-        "SLIDE 2 · „De ce merită să te oprești aici?” — explică ideea principală a postării în 1–2 propoziții.",
-        "SLIDE 3 · „Detaliul pe care poate nu l-ai observat” — arată partea concretă care a făcut postarea interesantă.",
-        "SLIDE 4 · „Și dacă ai face asta diferit?” — adaugă o perspectivă nouă, fără să schimbi tema originală.",
-        "SLIDE 5 · „Tu ce alegi?” — cere un răspuns simplu sau invită la salvare."
-      ],
-      caption: "Aceeași idee care a funcționat, prezentată într-un format pe care oamenii îl pot parcurge și salva.",
-      cta: "Salvează caruselul dacă vrei să revii la idee."
+      format: "5 slide-uri · aceeași poveste, împărțită logic",
+      slides: carousel,
+      caption: base,
+      cta: "Păstrează CTA-ul din postarea originală sau încheie cu o întrebare care continuă aceeași poveste."
     },
     {
       title: "2 · Reel",
-      format: "15 secunde · scenariu complet",
-      frames: [
-        "0–2s · TEXT PE ECRAN: „" + hook.slice(0, 85) + "”",
-        "2–5s · VIDEO: arată produsul / rezultatul / momentul central al postării originale.",
-        "5–9s · TEXT PE ECRAN: „Detaliul pe care nu îl vezi din prima.” + arată un close-up.",
-        "9–12s · VOICE-OVER: explică într-o propoziție de ce merită atenție.",
-        "12–15s · TEXT PE ECRAN: „Tu ce ai alege?” + CTA."
-      ],
-      caption: "Postarea care a mers nu trebuie să rămână o singură postare. Aceeași idee poate fi consumată și în video.",
-      cta: "Dacă vrei partea a doua, scrie DA."
+      format: "15 secunde · aceeași poveste, spusă în video",
+      frames: reelFrames,
+      caption: base,
+      cta: "Încheie Reel-ul cu aceeași idee din postarea originală."
     },
     {
       title: "3 · Stories",
-      format: "4 cadre · text gata de publicat",
-      stories: [
-        "STORY 1: „Ții minte postarea aceasta? A fost una dintre cele mai apreciate de pe pagină.”",
-        "STORY 2: „Ideea ei, pe scurt: " + hook.slice(0, 120) + "”",
-        "STORY 3: „Acum vreau să știu: ai prefera varianta A sau B?” + sticker POLL.",
-        "STORY 4: „Vrei să continui tema aceasta? Scrie-mi DA / răspunde la Story.”"
-      ],
-      caption: "Stories mută aceeași idee din feed într-o conversație mai directă.",
-      cta: "Folosește poll-ul pentru a testa rapid reacția."
+      format: "4 cadre · aceeași poveste, împărțită în pași",
+      stories,
+      caption: base,
+      cta: "Folosește un poll sau o întrebare numai dacă se leagă direct de conținutul original."
     }
   ];
 }
