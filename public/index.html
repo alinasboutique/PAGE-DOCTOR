@@ -159,6 +159,7 @@ function addItems(id,items,empty){
  items.forEach(x=>{const div=document.createElement('div');div.className='priority';div.textContent='• '+x;el.appendChild(div)});
 }
 function showResult(d){
+ window.pageDoctorData=d;
  document.getElementById('result').classList.remove('hidden');
  document.getElementById('pageName').textContent=d.page?.name||'Pagina conectată';
  const diag=d.diagnostic||{};
@@ -229,9 +230,7 @@ function showResult(d){
  document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
 function generateNextPosts(){
- const stored=sessionStorage.getItem('pageDoctorResult');
- if(!stored){return}
- const d=JSON.parse(stored), diag=d.diagnostic||{}, t=diag.topPostAnalysis;
+ const d=window.pageDoctorData||{}, diag=d.diagnostic||{}, t=diag.topPostAnalysis;
  const out=document.getElementById('generatedPosts'); out.innerHTML='';
  if(!t){out.innerHTML='<div class="priority">Nu avem încă o postare cu suficiente date pentru a genera variante personalizate.</div>';return}
  const niche=d?.diagnostic?.contentPlan?.niche||'pagina ta';
