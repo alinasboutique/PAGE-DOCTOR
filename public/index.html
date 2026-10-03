@@ -250,6 +250,17 @@ function generateNextPosts(){
  ];
  variants.forEach(v=>{const div=document.createElement('div');div.className='variant';div.innerHTML='<b>'+escapeText(v.title)+'</b><strong>🔥 '+escapeText(v.hook)+'</strong><p>'+escapeText(v.body)+'</p><strong>👉 '+escapeText(v.cta)+'</strong>';out.appendChild(div)});
 }
+function repurposeTopPost(){
+ const d=window.pageDoctorData||{}, items=d?.diagnostic?.repurposedPosts||[], out=document.getElementById('repurposedPosts');
+ out.innerHTML='';
+ if(!items.length){out.innerHTML='<div class="priority">Nu există încă suficiente date pentru a transforma postarea principală.</div>';return}
+ items.forEach(v=>{
+   const div=document.createElement('div');div.className='variant';
+   div.innerHTML='<b>'+escapeText(v.title)+'</b><span class="mini">'+escapeText(v.format)+'</span><p><strong>🔥 '+escapeText(v.hook)+'</strong></p><p>'+escapeText(v.text)+'</p><strong>👉 '+escapeText(v.cta)+'</strong>';
+   out.appendChild(div);
+ });
+ out.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 const stored=sessionStorage.getItem('pageDoctorResult');
 if(stored){try{showResult(JSON.parse(stored));sessionStorage.removeItem('pageDoctorResult')}catch(e){}}
 </script>
