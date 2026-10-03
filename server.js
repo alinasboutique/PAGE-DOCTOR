@@ -573,31 +573,29 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
 
 function generateRepurposedPosts({ niche, goal, topPost }) {
   if (!topPost) return [];
-  const base = String(topPost.message || "").replace(/\s+/g, " ").trim();
+  const base = String(topPost.message || "postarea performantă").replace(/\s+/g, " ").trim();
   const category = classifyPost(topPost);
-  const isSales = String(goal || "").toLowerCase().includes("comenzi");
-  const cta = isSales ? "Scrie-mi DETALII și îți spun variantele disponibile." : "Tu ce ai alege? Spune-mi în comentarii.";
   return [
     {
-      title: "1 · Aceeași idee, alt unghi",
-      format: "Postare",
-      hook: "Postarea a funcționat. Acum o spunem dintr-un unghi nou.",
-      text: "Pornim de la tema reală: " + base.slice(0, 180) + ". Păstrăm ideea care a atras atenția, dar schimbăm exemplul, perspectiva și începutul.",
-      cta: cta
+      title: "1 · Transformă în carusel",
+      format: "Carusel · 5 slide-uri",
+      hook: "Păstrează exact ideea postării care a mers, dar fă-o ușor de parcurs și salvat.",
+      text: "Slide 1: HOOK — " + base.slice(0, 110) + ". | Slide 2: explică ideea principală într-o propoziție. | Slide 3: arată primul exemplu/detaliu. | Slide 4: arată al doilea exemplu sau concluzia practică. | Slide 5: CTA — cere o alegere, un comentariu sau o salvare.",
+      cta: "Salvează caruselul dacă vrei să revii la idee."
     },
     {
-      title: "2 · Din postare în Reel",
-      format: "Reel",
-      hook: "Uite ce nu se vede în postarea finală.",
-      text: "Transformă aceeași temă într-un Reel de 10–20 secunde: hook în primele 2 secunde, 3–4 cadre cu procesul sau produsul, apoi rezultatul final.",
-      cta: "Dacă vrei să vezi partea a doua, scrie DA."
+      title: "2 · Transformă în Reel",
+      format: "Reel · scenariu cadru cu cadru",
+      hook: "Nu schimbăm subiectul. Schimbăm doar modul în care îl consumă publicul.",
+      text: "Cadru 1 (0–2s): afișează hook-ul postării originale. | Cadru 2 (2–5s): arată produsul/procesul/detaliul despre care vorbește postarea. | Cadru 3 (5–9s): arată dovada sau rezultatul. | Cadru 4 (9–13s): spune concluzia postării. | Cadru 5 (13–15s): CTA pe ecran.",
+      cta: "Dacă vrei partea a doua, scrie DA."
     },
     {
-      title: "3 · Din conținut în conversație",
-      format: "Postare conversațională",
-      hook: "Dacă ai fi în locul meu, ce ai alege?",
-      text: "Folosește aceeași temă din categoria " + category + ", dar pune publicul în centru. Prezintă două variante și cere o alegere simplă.",
-      cta: "A sau B? Spune-mi alegerea ta și de ce."
+      title: "3 · Transformă în Stories",
+      format: "Stories · 4 cadre",
+      hook: "Du aceeași idee în conversație directă cu urmăritorii.",
+      text: "Story 1: prezintă ideea originală. | Story 2: arată exemplul real din postare. | Story 3: pune un poll sau o întrebare despre aceeași temă. | Story 4: răspunde rezultatului și invită oamenii să îți scrie. Categoria analizată: " + category + ".",
+      cta: "Folosește poll-ul pentru a vedea dacă interesul din postare se transformă în răspunsuri."
     }
   ];
 }
