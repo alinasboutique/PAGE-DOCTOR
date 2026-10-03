@@ -557,6 +557,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
     plan,
     contentPlan,
     topPostAnalysis,
+    repurposedPosts: [],
     topPosts: topPosts.map(p => ({
       id: p.id,
       message: String(p.message || "").slice(0, 180),
