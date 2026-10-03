@@ -519,9 +519,9 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
     "Ziua 7: compară rezultatele și păstrează ce merită testat din nou."
   ];
 
-  const contentPlan = generateContentPlan({ niche: prefs.niche, goal: prefs.goal, bestCategory, topPost });
-
   const topPosts = [...engagementPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5);
+  const topPost = topPosts[0] || null;
+  const contentPlan = generateContentPlan({ niche: prefs.niche, goal: prefs.goal, bestCategory, topPost });
 
   return {
     dataAvailable: hasData || analyzedPosts.length > 0,
