@@ -523,7 +523,8 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
   const topPost = topPosts[0] || null;
   const audienceInsights = buildAudienceInsights({ analyzedPosts, engagementPosts, categoryStats, bestCategory, weakestCategory, avgEngagement, topPosts: [...engagementPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5) });
   const contentPlan = generateContentPlan({ niche: prefs.niche, goal: prefs.goal, bestCategory, topPost });
-  const repurposedPosts = generateRepurposedPosts({ niche: prefs.niche, goal: prefs.goal, topPost });
+  const nextPosts = generateNextPosts({ niche: prefs.niche, goal: prefs.goal, topPost, pageInfo, bestCategory, avgEngagement });
+  const repurposedPosts = generateRepurposedPosts({ topPost });
 
   const pageAvg = avgEngagement || 0;
   const topTotal = topPost?.engagement?.total ?? null;
@@ -568,6 +569,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
     postingTimes,
     audienceInsights,
     topPostAnalysis,
+    nextPosts,
     repurposedPosts,
     topPosts: topPosts.map(p => ({
       id: p.id,
@@ -752,31 +754,109 @@ function buildAudienceInsights({ analyzedPosts, engagementPosts, categoryStats, 
   return {available:true,title:"Ce vrea publicul meu?",summary,signals:signals.slice(0,4),actions:[...new Set(actions)].slice(0,4),evidence,confidence};
 }
 
-function generateRepurposedPosts({ niche, goal, topPost }) {
+function generateNextPosts({ niche, goal, topPost, pageInfo, bestCategory, avgEngagement }) {
   if (!topPost) return [];
-  const base = String(topPost.message || "postarea performantă").replace(/\s+/g, " ").trim();
+  const base = String(topPost.message || "").replace(/\s+/g, " ").trim();
   const category = classifyPost(topPost);
+  const pageName = String(pageInfo?.name || "pagina ta").trim();
+  const topEngagement = Number(topPost?.engagement?.total || 0);
+  const ratio = avgEngagement > 0 ? Math.round((topEngagement / avgEngagement) * 10) / 10 : null;
+  const evidence = ratio ? "Postarea a avut " + ratio + "× media de interacțiuni a paginii." : "Postarea are cel mai bun semnal de engagement dintre postările comparabile.";
+
+  const goalText = String(goal || "").toLowerCase();
+  const actionCta = goalText.includes("comenzi")
+    ? "Dacă vrei detalii pentru o comandă, scrie-mi în privat."
+    : goalText.includes("comentarii")
+      ? "Tu cum ai alege? Spune-mi în comentarii."
+      : goalText.includes("urmăritori")
+        ? "Dacă vrei să vezi și următoarea parte, urmărește pagina."
+        : "Tu ce variantă ai alege? Spune-mi în comentarii.";
+
+  const newPosts = [
+    {
+      title: "1 · Continuă semnalul câștigător",
+      objective: "Confirmă dacă tema care a funcționat poate produce încă o postare bună.",
+      reason: evidence + " Păstrăm tema „" + category + "”, dar nu copiem postarea.",
+      hook: "Postarea despre „" + base.slice(0, 95) + (base.length > 95 ? "…" : "") + "” a atras atenția. Dar partea interesantă abia acum începe.",
+      caption: "Ai văzut deja " + (base ? "povestea aceasta" : "ideea aceasta") + ". Acum vreau să-ți arăt o altă perspectivă asupra ei.\n\nÎn loc să repet exact ce am postat, aleg un exemplu nou și îți arăt detaliul care face diferența.\n\nUneori nu produsul sau subiectul în sine este cel care oprește scroll-ul, ci felul în care îl prezentăm.\n\n" + actionCta,
+      cta: actionCta,
+      evidence
+    },
+    {
+      title: "2 · Testează ce lipsește",
+      objective: topPost.engagement.comments === 0 ? "Testează dacă interesul din reacții poate deveni conversație." : "Testează dacă tema performantă poate genera și distribuiri sau recomandări.",
+      reason: topPost.engagement.comments === 0
+        ? "Postarea performantă a avut reacții, dar nu a avut comentarii disponibile. Următorul test schimbă intenționat CTA-ul."
+        : "Postarea performantă a generat deja conversație. Următorul test urmărește un comportament diferit: distribuirea.",
+      hook: topPost.engagement.comments === 0 ? "Am nevoie de părerea ta înainte să aleg următoarea variantă." : "Pe cine ai trimite să vadă asta?",
+      caption: topPost.engagement.comments === 0
+        ? "Pornesc de la aceeași temă care a funcționat pe " + pageName + ", dar de data aceasta nu vreau doar să o vezi. Vreau să alegi.\n\nVarianta A sau varianta B? Spune-mi ce ai alege și, mai important, de ce.\n\nRăspunsurile voastre mă ajută să aleg ce dezvolt mai departe."
+        : "Tema aceasta a atras deja atenție. Acum vreau să aflu dacă este și genul de conținut pe care l-ai trimite unei persoane care ar avea nevoie de el.\n\nDacă îți vine cineva în minte, trimite-i postarea. Iar dacă ai o idee pentru următoarea variantă, spune-mi în comentarii.",
+      cta: topPost.engagement.comments === 0 ? "Alege A sau B și spune-mi de ce." : "Trimite postarea unei persoane pentru care ar fi utilă.",
+      evidence
+    },
+    {
+      title: "3 · Transformă interesul în acțiune",
+      objective: "Leagă tema performantă de obiectivul ales pentru pagină.",
+      reason: "Folosim tema care a atras deja atenție, dar introducem un pas clar spre obiectivul „" + (goal || "engagement") + "”.",
+      hook: goalText.includes("comenzi")
+        ? "Ți-a plăcut ideea? Uite cum poate deveni o comandă personalizată."
+        : "Dacă ți-a atras atenția, uite ce poți face mai departe.",
+      caption: "Tema aceasta a funcționat deja pe această pagină, așa că nu o abandonăm. O ducem mai aproape de ceea ce poate face omul concret.\n\nÎți arăt ce variantă este disponibilă, pentru cine se potrivește și ce poate fi personalizat. Fără să complicăm lucrurile.\n\n" + (goalText.includes("comenzi")
+        ? "Dacă ai o ocazie sau un produs anume în minte, spune-mi ce cauți și îți spun ce variante pot realiza."
+        : goalText.includes("urmăritori")
+          ? "Dacă vrei să vezi și următoarele exemple din aceeași temă, urmărește pagina."
+          : "Dacă ți se potrivește tema, spune-mi ce ai vrea să vezi în continuare."),
+      cta: goalText.includes("comenzi") ? "Scrie-mi DETALII și îți spun variantele disponibile." : actionCta,
+      evidence
+    }
+  ];
+
+  return newPosts;
+}
+
+function generateRepurposedPosts({ topPost }) {
+  if (!topPost) return [];
+  const base = String(topPost.message || "").replace(/\s+/g, " ").trim();
+  const hook = base ? base.slice(0, 140) : "Ideea postării care a funcționat";
   return [
     {
-      title: "1 · Transformă în carusel",
-      format: "Carusel · 5 slide-uri",
-      hook: "Păstrează exact ideea postării care a mers, dar fă-o ușor de parcurs și salvat.",
-      text: "Slide 1: HOOK — " + base.slice(0, 110) + ". | Slide 2: explică ideea principală într-o propoziție. | Slide 3: arată primul exemplu/detaliu. | Slide 4: arată al doilea exemplu sau concluzia practică. | Slide 5: CTA — cere o alegere, un comentariu sau o salvare.",
+      title: "1 · Carusel",
+      format: "5 slide-uri · text gata de pus pe design",
+      slides: [
+        "SLIDE 1 · " + hook,
+        "SLIDE 2 · „De ce merită să te oprești aici?” — explică ideea principală a postării în 1–2 propoziții.",
+        "SLIDE 3 · „Detaliul pe care poate nu l-ai observat” — arată partea concretă care a făcut postarea interesantă.",
+        "SLIDE 4 · „Și dacă ai face asta diferit?” — adaugă o perspectivă nouă, fără să schimbi tema originală.",
+        "SLIDE 5 · „Tu ce alegi?” — cere un răspuns simplu sau invită la salvare."
+      ],
+      caption: "Aceeași idee care a funcționat, prezentată într-un format pe care oamenii îl pot parcurge și salva.",
       cta: "Salvează caruselul dacă vrei să revii la idee."
     },
     {
-      title: "2 · Transformă în Reel",
-      format: "Reel · scenariu cadru cu cadru",
-      hook: "Nu schimbăm subiectul. Schimbăm doar modul în care îl consumă publicul.",
-      text: "Cadru 1 (0–2s): afișează hook-ul postării originale. | Cadru 2 (2–5s): arată produsul/procesul/detaliul despre care vorbește postarea. | Cadru 3 (5–9s): arată dovada sau rezultatul. | Cadru 4 (9–13s): spune concluzia postării. | Cadru 5 (13–15s): CTA pe ecran.",
+      title: "2 · Reel",
+      format: "15 secunde · scenariu complet",
+      frames: [
+        "0–2s · TEXT PE ECRAN: „" + hook.slice(0, 85) + "”",
+        "2–5s · VIDEO: arată produsul / rezultatul / momentul central al postării originale.",
+        "5–9s · TEXT PE ECRAN: „Detaliul pe care nu îl vezi din prima.” + arată un close-up.",
+        "9–12s · VOICE-OVER: explică într-o propoziție de ce merită atenție.",
+        "12–15s · TEXT PE ECRAN: „Tu ce ai alege?” + CTA."
+      ],
+      caption: "Postarea care a mers nu trebuie să rămână o singură postare. Aceeași idee poate fi consumată și în video.",
       cta: "Dacă vrei partea a doua, scrie DA."
     },
     {
-      title: "3 · Transformă în Stories",
-      format: "Stories · 4 cadre",
-      hook: "Du aceeași idee în conversație directă cu urmăritorii.",
-      text: "Story 1: prezintă ideea originală. | Story 2: arată exemplul real din postare. | Story 3: pune un poll sau o întrebare despre aceeași temă. | Story 4: răspunde rezultatului și invită oamenii să îți scrie. Categoria analizată: " + category + ".",
-      cta: "Folosește poll-ul pentru a vedea dacă interesul din postare se transformă în răspunsuri."
+      title: "3 · Stories",
+      format: "4 cadre · text gata de publicat",
+      stories: [
+        "STORY 1: „Ții minte postarea aceasta? A fost una dintre cele mai apreciate de pe pagină.”",
+        "STORY 2: „Ideea ei, pe scurt: " + hook.slice(0, 120) + "”",
+        "STORY 3: „Acum vreau să știu: ai prefera varianta A sau B?” + sticker POLL.",
+        "STORY 4: „Vrei să continui tema aceasta? Scrie-mi DA / răspunde la Story.”"
+      ],
+      caption: "Stories mută aceeași idee din feed într-o conversație mai directă.",
+      cta: "Folosește poll-ul pentru a testa rapid reacția."
     }
   ];
 }
