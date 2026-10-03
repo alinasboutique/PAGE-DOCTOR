@@ -102,14 +102,14 @@
   <h3>✍️ Ce să postezi în continuare?</h3>
   <p class="section-help">Pornim de la semnalul real al paginii tale, nu de la un text generic.</p>
   <div class="gen-box">
-    <strong>3 variante inspirate din postarea ta cu cele mai multe interacțiuni</strong>
-    <div class="gen-actions"><button class="btn" onclick="generateNextPosts()">✨ Generează 3 variante</button></div>
+    <strong>3 postări noi, fiecare cu un scop diferit</strong>
+    <div class="gen-actions"><button class="btn" onclick="generateNextPosts()">✨ Creează 3 postări noi</button></div>
     <div id="generatedPosts" class="gen-output"></div>
   </div>
   <div class="gen-box">
-    <strong>🔄 Transformă postarea care a mers în alte formate</strong>
-    <p class="section-help">Aici NU inventăm alte idei. Păstrăm aceeași postare și o adaptăm pentru Carusel, Reel și Stories.</p>
-    <div class="gen-actions"><button class="btn" onclick="repurposeTopPost()">🔄 Transformă în alte formate</button></div>
+    <strong>♻️ Nu lăsa postarea care a mers să fie folosită o singură dată</strong>
+    <p class="section-help">Aici nu inventăm o idee nouă. Refolosim aceeași postare și o transformăm concret în Carusel, Reel și Stories.</p>
+    <div class="gen-actions"><button class="btn" onclick="repurposeTopPost()">🔄 Refolosește postarea</button></div>
     <div id="repurposedPosts" class="gen-output"></div>
   </div>
 </div>
@@ -311,10 +311,32 @@ function generateNextPosts(){
 function repurposeTopPost(){
  const d=window.pageDoctorData||{}, items=d?.diagnostic?.repurposedPosts||[], out=document.getElementById('repurposedPosts');
  out.innerHTML='';
- if(!items.length){out.innerHTML='<div class="priority">Nu există încă suficiente date pentru a transforma postarea principală.</div>';return}
+ if(!items.length){
+   out.innerHTML='<div class="priority">Nu există încă suficiente date pentru a transforma postarea principală.</div>';
+   return;
+ }
  items.forEach(v=>{
-   const div=document.createElement('div');div.className='variant';
-   div.innerHTML='<b>'+escapeText(v.title)+'</b><span class="mini">'+escapeText(v.format)+'</span><p><strong>🔥 '+escapeText(v.hook)+'</strong></p><p>'+escapeText(v.text)+'</p><strong>👉 '+escapeText(v.cta)+'</strong>';
+   const div=document.createElement('div');
+   div.className='variant';
+   let html='<b>'+escapeText(v.title)+'</b><span class="mini" style="display:block;margin-top:5px">'+escapeText(v.format||'')+'</span>';
+   if(Array.isArray(v.slides)){
+     html+='<div style="margin-top:12px"><strong>🖼️ Textul pentru fiecare slide</strong>';
+     html+=v.slides.map(x=>'<div class="priority" style="margin-top:8px;white-space:pre-line">'+escapeText(x)+'</div>').join('');
+     html+='</div>';
+   }
+   if(Array.isArray(v.frames)){
+     html+='<div style="margin-top:12px"><strong>🎬 Scenariul Reel-ului</strong>';
+     html+=v.frames.map(x=>'<div class="priority" style="margin-top:8px;white-space:pre-line">'+escapeText(x)+'</div>').join('');
+     html+='</div>';
+   }
+   if(Array.isArray(v.stories)){
+     html+='<div style="margin-top:12px"><strong>📱 Cele 4 Stories</strong>';
+     html+=v.stories.map(x=>'<div class="priority" style="margin-top:8px;white-space:pre-line">'+escapeText(x)+'</div>').join('');
+     html+='</div>';
+   }
+   if(v.caption) html+='<div style="margin-top:14px"><strong>📝 Caption</strong><p style="white-space:pre-line">'+escapeText(v.caption)+'</p></div>';
+   if(v.cta) html+='<p><strong>👉 '+escapeText(v.cta)+'</strong></p>';
+   div.innerHTML=html;
    out.appendChild(div);
  });
  out.scrollIntoView({behavior:'smooth',block:'nearest'});
