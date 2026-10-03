@@ -523,6 +523,22 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
   const topPost = topPosts[0] || null;
   const contentPlan = generateContentPlan({ niche: prefs.niche, goal: prefs.goal, bestCategory, topPost });
 
+  const pageAvg = avgEngagement || 0;
+  const topTotal = topPost?.engagement?.total ?? null;
+  const topPostAnalysis = topPost ? {
+    engagement: topTotal,
+    vsPageAverage: pageAvg > 0 && topTotal !== null ? Math.round((topTotal / pageAvg) * 10) / 10 : null,
+    category: classifyPost(topPost),
+    reactions: topPost.engagement.reactions,
+    comments: topPost.engagement.comments,
+    shares: topPost.engagement.shares,
+    format: String(topPost.type || topPost.status_type || "Postare"),
+    hasQuestion: /\\?|\\b(cum|ce|care|alege|spune-mi|părere|parere)\\b/i.test(String(topPost.message || "")),
+    hasSalesSignal: /\\b(comand|comenzi|preț|pret|ofert|disponibil|livrare|personalizat|rezerv)/i.test(String(topPost.message || "")),
+    message: String(topPost.message || "").replace(/\\s+/g, " ").trim().slice(0, 500),
+    permalink_url: topPost.permalink_url || null
+  } : null;
+
   return {
     dataAvailable: hasData || analyzedPosts.length > 0,
     status: hasData ? "Am primit date reale de la Meta" : "Am primit date publice, dar Insights sunt limitate",
@@ -540,6 +556,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
     priorities: priorities.slice(0,3),
     plan,
     contentPlan,
+    topPostAnalysis,
     topPosts: topPosts.map(p => ({
       id: p.id,
       message: String(p.message || "").slice(0, 180),
