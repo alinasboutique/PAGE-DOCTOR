@@ -521,6 +521,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
 
   const topPosts = [...engagementPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5);
   const topPost = topPosts[0] || null;
+  const audienceInsights = buildAudienceInsights({ analyzedPosts, engagementPosts, categoryStats, bestCategory, weakestCategory, avgEngagement, topPosts: [...engagementPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5) });
   const contentPlan = generateContentPlan({ niche: prefs.niche, goal: prefs.goal, bestCategory, topPost });
   const repurposedPosts = generateRepurposedPosts({ niche: prefs.niche, goal: prefs.goal, topPost });
 
@@ -557,6 +558,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
     priorities: priorities.slice(0,3),
     plan,
     contentPlan,
+    audienceInsights,
     topPostAnalysis,
     repurposedPosts,
     topPosts: topPosts.map(p => ({
@@ -569,6 +571,60 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
       permalink_url: p.permalink_url || null
     }))
   };
+}
+
+function buildAudienceInsights({ analyzedPosts, engagementPosts, categoryStats, bestCategory, weakestCategory, avgEngagement, topPosts }) {
+  if (!engagementPosts.length) return {
+    available:false,
+    title:"Ce vrea publicul meu?",
+    summary:"Nu avem suficiente date publice de engagement pentru a identifica tipare fără să ghicim.",
+    signals:[],
+    actions:["Publică câteva formate diferite și revino după ce apar suficiente interacțiuni.","Nu tratăm lipsa engagement-ului ca 0."],
+    confidence:"scăzută"
+  };
+
+  const conversation=engagementPosts.filter(p=>(p.engagement.comments??0)>0||(p.engagement.shares??0)>0);
+  const questionPosts=engagementPosts.filter(p=>/\?|\b(cum|ce|care|alege|spune-mi|părere|parere|voi ce)\b/i.test(String(p.message||"")));
+  const nonQuestion=engagementPosts.filter(p=>!questionPosts.includes(p));
+  const questionAvg=questionPosts.length?questionPosts.reduce((s,p)=>s+p.engagement.total,0)/questionPosts.length:null;
+  const nonQuestionAvg=nonQuestion.length?nonQuestion.reduce((s,p)=>s+p.engagement.total,0)/nonQuestion.length:null;
+  const signals=[],actions=[],evidence=[];
+
+  if(bestCategory){
+    signals.push({type:"atractie",title:"Publicul reacționează cel mai bine la "+bestCategory.category,detail:"Această categorie are cea mai mare medie dintre categoriile cu cel puțin 2 postări cu engagement disponibil.",value:Math.round(bestCategory.avgEngagement)});
+    evidence.push(bestCategory.category+": "+Math.round(bestCategory.avgEngagement)+" interacțiuni medii/postare");
+    actions.push("Repetă "+bestCategory.category+" de 2 ori în următoarele 7 zile, cu exemple și hook-uri diferite.");
+  }
+
+  if(questionAvg!==null&&nonQuestionAvg!==null&&questionPosts.length>=2&&nonQuestion.length>=2){
+    if(questionAvg>nonQuestionAvg){
+      signals.push({type:"conversatie",title:"Postările care cer un răspuns au primit mai mult engagement",detail:"În eșantionul analizat, postările cu întrebări sau alegeri au avut o medie mai mare. Este o asociere, nu dovada că întrebarea a cauzat rezultatul.",value:Math.round(questionAvg)});
+      evidence.push("Cu întrebare: "+Math.round(questionAvg)+" vs. fără: "+Math.round(nonQuestionAvg)+" interacțiuni medii");
+      actions.push("Testează o postare cu o întrebare simplă sau o alegere A/B.");
+    } else {
+      signals.push({type:"conversatie",title:"Întrebările nu au depășit clar restul conținutului",detail:"Datele actuale nu arată un avantaj clar pentru postările cu întrebări. Nu forțăm CTA-uri conversaționale fără semnal.",value:Math.round(questionAvg)});
+      evidence.push("Cu întrebare: "+Math.round(questionAvg)+" vs. fără: "+Math.round(nonQuestionAvg)+" interacțiuni medii");
+    }
+  } else {
+    signals.push({type:"conversatie",title:conversation.length?"Există semnale de conversație, dar nu suficiente pentru o comparație sigură":"Conversația este încă un semnal slab",detail:conversation.length?"Unele postări au primit comentarii sau distribuiri, dar eșantionul nu permite o comparație solidă.":"Postările analizate au primit puține sau deloc comentarii ori distribuiri.",value:conversation.length});
+    actions.push(conversation.length?"Repetă o temă care a generat comentarii și schimbă doar hook-ul.":"Testează o postare A/B care cere un răspuns foarte simplu.");
+  }
+
+  if(topPosts.length){
+    const topCategories=[...new Set(topPosts.slice(0,3).map(p=>classifyPost(p)))];
+    signals.push({type:"top",title:"Cele mai puternice semnale vin din "+topCategories.join(", "),detail:"Primele postări sunt ordonate după interacțiunile publice disponibile.",value:topPosts[0].engagement.total});
+    evidence.push("Top post: "+String(topPosts[0].message||"").replace(/\s+/g," ").slice(0,120));
+  }
+
+  if(weakestCategory&&bestCategory&&weakestCategory.category!==bestCategory.category){
+    const gap=avgEngagement>0?Math.round((1-weakestCategory.avgEngagement/avgEngagement)*100):null;
+    signals.push({type:"frictiune",title:"Un tip de conținut nu ține pasul cu restul",detail:"„"+weakestCategory.category+"” are o medie mai mică decât media paginii. Asta indică un format de testat diferit, nu că publicul îl respinge definitiv.",value:gap!==null?gap+"% sub media paginii":null});
+    actions.push("Nu abandona "+weakestCategory.category+" după un singur rezultat; schimbă hook-ul sau formatul și testează din nou.");
+  }
+
+  const confidence=engagementPosts.length>=20?"ridicată":engagementPosts.length>=10?"medie":"orientativă";
+  const summary=bestCategory?"Semnalul principal din ultimele 28 de zile este „"+bestCategory.category+"”. Publicul a reacționat mai mult la acest tip de conținut decât la celelalte categorii comparabile.":"Avem câteva semnale de engagement, dar nu suficient de clare pentru o concluzie puternică.";
+  return {available:true,title:"Ce vrea publicul meu?",summary,signals:signals.slice(0,4),actions:[...new Set(actions)].slice(0,4),evidence,confidence};
 }
 
 function generateRepurposedPosts({ niche, goal, topPost }) {
