@@ -522,6 +522,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
   const topPosts = [...engagementPosts].sort((a,b) => b.engagement.total - a.engagement.total).slice(0,5);
   const topPost = topPosts[0] || null;
   const contentPlan = generateContentPlan({ niche: prefs.niche, goal: prefs.goal, bestCategory, topPost });
+  const repurposedPosts = generateRepurposedPosts({ niche: prefs.niche, goal: prefs.goal, topPost });
 
   const pageAvg = avgEngagement || 0;
   const topTotal = topPost?.engagement?.total ?? null;
@@ -557,7 +558,7 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
     plan,
     contentPlan,
     topPostAnalysis,
-    repurposedPosts: [],
+    repurposedPosts,
     topPosts: topPosts.map(p => ({
       id: p.id,
       message: String(p.message || "").slice(0, 180),
