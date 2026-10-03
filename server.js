@@ -571,6 +571,37 @@ function buildDiagnostic(insights, posts = [], pageInfo = {}, prefs = {}) {
   };
 }
 
+function generateRepurposedPosts({ niche, goal, topPost }) {
+  if (!topPost) return [];
+  const base = String(topPost.message || "").replace(/\s+/g, " ").trim();
+  const category = classifyPost(topPost);
+  const isSales = String(goal || "").toLowerCase().includes("comenzi");
+  const cta = isSales ? "Scrie-mi DETALII și îți spun variantele disponibile." : "Tu ce ai alege? Spune-mi în comentarii.";
+  return [
+    {
+      title: "1 · Aceeași idee, alt unghi",
+      format: "Postare",
+      hook: "Postarea a funcționat. Acum o spunem dintr-un unghi nou.",
+      text: "Pornim de la tema reală: " + base.slice(0, 180) + ". Păstrăm ideea care a atras atenția, dar schimbăm exemplul, perspectiva și începutul.",
+      cta: cta
+    },
+    {
+      title: "2 · Din postare în Reel",
+      format: "Reel",
+      hook: "Uite ce nu se vede în postarea finală.",
+      text: "Transformă aceeași temă într-un Reel de 10–20 secunde: hook în primele 2 secunde, 3–4 cadre cu procesul sau produsul, apoi rezultatul final.",
+      cta: "Dacă vrei să vezi partea a doua, scrie DA."
+    },
+    {
+      title: "3 · Din conținut în conversație",
+      format: "Postare conversațională",
+      hook: "Dacă ai fi în locul meu, ce ai alege?",
+      text: "Folosește aceeași temă din categoria " + category + ", dar pune publicul în centru. Prezintă două variante și cere o alegere simplă.",
+      cta: "A sau B? Spune-mi alegerea ta și de ce."
+    }
+  ];
+}
+
 function generateContentPlan({ niche, goal, bestCategory, topPost }) {
   const n = String(niche || "Other").toLowerCase();
   let key = "other";
